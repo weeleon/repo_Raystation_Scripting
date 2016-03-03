@@ -2,7 +2,7 @@ library(reshape2)
 library(ggplot2)
 library(dplyr)
 #this needs to be edited to set the folder that contains the files
-setwd("/Users/lenw/Documents/Clinical_Studies/Vejle_Projects/ABAS_Studies")
+setwd("/Users/lenw/Documents/Python_Programming/repo_Raystation_Scripting/ABAS_Studies")
 list.files(pattern = "\\.csv$")
 
 #read csv file of raw values
@@ -59,7 +59,7 @@ doseDistribution <- data.frame(
       SDvsOR = as.numeric(as.character(dose$SD))-as.numeric(as.character(dose$OR)),
       RSvsOR = as.numeric(as.character(dose$RS))-as.numeric(as.character(dose$OR)),
       MFvsOR = as.numeric(as.character(dose$MF))-as.numeric(as.character(dose$OR)),
-      MF2vsOR = as.numeric(as.character(doseNew$Mfnew))-as.numeric(as.character(dose$OR))
+      MF2vsOR = as.numeric(as.character(doseNew$Mfnew))-as.numeric(as.character(doseNew$OR))
       )
 mDoseDistribution <- melt(doseDistribution,id=c("patid","organ","type"))
 names(mDoseDistribution) <- c("patid","organ","type","Category","DoseDiff")
