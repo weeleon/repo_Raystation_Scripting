@@ -1,9 +1,13 @@
 
 # DEFINE THE CT DENSITY TABLE NAME
-densityConversionTable = 'HR_OEB HUsetting'
+densityConversionTable = 'Siemens120kVpCT'
+oncentraConversionTable = 'OEB CT Table'
+
 
 # DEFINE AN EXTERNAL CONTOUR THRESHOLD LEVEL FOR AUTOSEGMENTATION
 externalContourThreshold = -150
+factoryContourThreshold = -250
+
 
 # DEFINE A MANDATORY SET OF INITAL STRUCTURES
 # ------ PLAN NEEDS TO HAVE THESE STRUCTURES DEFINED BEFORE EXECUTING THE SCRIPT
@@ -15,12 +19,12 @@ penileBulb = 'OR; Bulbus penis'
 rectum = 'OR; Rectum'
 bowel = 'OR; Tarm' #only exists for N+ disease
 testes = 'OR; Testes'
-fiducial1 = 'Stift1' #does not exist for salvage cases
-fiducial2 = 'Stift2' #does not exist for salvage cases
-fiducial3 = 'Stift3' #does not exist for salvage cases
-fiducial4 = 'Stift4' #may or may not exist for any prostate plan
-fiducial5 = 'Stift5' #may or may not exist for any prostate plan
-fiducial6 = 'Stift6' #may or may not exist for any prostate plan
+fiducial1 = 'S1' #does not exist for salvage cases
+fiducial2 = 'S2' #does not exist for salvage cases
+fiducial3 = 'S3' #does not exist for salvage cases
+fiducial4 = 'S4' #may or may not exist for any prostate plan
+fiducial5 = 'S5' #may or may not exist for any prostate plan
+fiducial6 = 'S6' #may or may not exist for any prostate plan
 
 # DEFINE A STANDARD SET OF ANATOMICAL STRUCTURE NAMES
 external = 'External'
@@ -32,30 +36,41 @@ ptvSV = 'PTV-SV'
 ptvTSV = 'PTV-TSV'
 ptvE = 'PTV-E'
 hvRect = 'HV-Rectum'
-marker1 = 'Mark_1'
-marker2 = 'Mark_2'
-marker3 = 'Mark_3'
-marker4 = 'Mark_4'
-marker5 = 'Mark_5'
-marker6 = 'Mark_6'
+marker1 = 'Mk1'
+marker2 = 'Mk2'
+marker3 = 'Mk3'
+marker4 = 'Mk4'
+marker5 = 'Mk5'
+marker6 = 'Mk6'
 
 # DEFINE A STANDARD SET OF STRUCTURE COLOURS
+# colour codes imported from Oncentra
 #---- see for example colour charts at http://www.rapidtables.com/web/color/RGB_Color.htm
-colourBladder = "0,153,0"
-colourRectum = "0,102,0"
-colourBowel = "0,204,0"
-colourCaputFemori = "0,51,0"
-colourPtvT = "178,102,255"
-colourPtvSV = "204,153,255"
-colourPtvTSV = "153,51,255"
-colourPtvE = "229,204,255"
+colourExternal = "255,173,91"
+colourCtvT = "255,128,128"
+colourCtvSV = "230,149,134"
+colourCtvE = "255,81,81"
+colourPtvT = "202,203,249"
+colourPtvSV = "112,102,232"
+colourPtvTSV = "202,203,249"
+colourPtvE = "126,130,239"
+colourAnalCanal = "0,204,0"
+colourBladder = "0,172,128"
+colourRectum = "0,102,51"
+colourBulbusPenis = "128,255,128"
+colourCaputFemori = "0,66,0"
+colourBowel = "0,176,0"
+colourTestes = "24,192,128"
+
 colourMarker1 = "0,51,25"
 colourMarker2 = "255,128,0"
 colourMarker3 = "255,153,255"
 colourMarker4 = "204,255,153"
 colourMarker5 = "0,102,102"
 colourMarker6 = "102,0,102"
+
 colourComplementExternal = "192,192,192"
+colourWallStructures = "0,200,255"
 
 
 # DEFINE A SET OF PLANNING HELP STRUCTURES
@@ -72,14 +87,18 @@ wallPtvT = 'Wall;(PTV-T)+5mm'
 wallPtvTSV = 'Wall;(PTV-TSV)+5mm'
 wallPtvE = 'Wall;(PTV-E)+5mm'
 transitionTSVtoE = 'PTV-E-(PTV-TSV+8mm)'
-complementExternalPtvT = 'External-(PTV-T)'
-complementExternalPtvTsv = 'External-(PTV-TSV)'
+complementExternalPtvT = 'External-(PTV-T+5mm)'
+complementExternalPtvTsv = 'External-(PTV-TSV+5mm)'
 complementExternalPtvE = 'External-(PTV-E)'
 
+
 # DEFINE THE STANDARD PLANNING AND PRESCRIPTION PARAMETERS
-defaultLinac = 'LW_Agility_VMAT' #standard linac beam model for dose planning
+defaultLinac = 'ElektaAgility_v1' #standard linac beam model for dose planning
 defaultDoseGrid = 0.25 #isotropic dose grid dimension
 defaultPhotonEn = 6 #standard photon beam modality in units of MV
+
+
+# DEFINE THE STANDARD TEMPLATES AND OPTIMIZATION FUNCTIONS
 
 
 
@@ -420,13 +439,13 @@ def CreateWallPtvE(pm,exam):
 #procedure CreateWallPtvE ends
 
 def CreateComplementExternalPtvT(pm,exam):
-# 20) external complementary volume without PTV-T
+# 20) external complementary volume without (PTV-T)+5mm
 	#External-(PTV-T)
 	try :
 		pm.CreateRoi(Name=complementExternalPtvT, Color=colourComplementExternal, Type="Organ", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[complementExternalPtvT].SetAlgebraExpression(
 			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvT], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvT], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
 			ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
 		pm.RegionsOfInterest[complementExternalPtvT].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
@@ -434,13 +453,13 @@ def CreateComplementExternalPtvT(pm,exam):
 #procedure CreateComplementExternalPtvT ends
 
 def CreateComplementExternalPtvTSV(pm,exam):
-# 21) external complementary volume without PTV-TSV
+# 21) external complementary volume without (PTV-TSV)+5mm
 	#External-(PTV-TSV)
 	try :
 		pm.CreateRoi(Name=complementExternalPtvTsv, Color=colourComplementExternal, Type="Organ", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[complementExternalPtvTsv].SetAlgebraExpression(
 			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
 			ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
 		pm.RegionsOfInterest[complementExternalPtvTsv].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
@@ -462,22 +481,22 @@ def CreateComplementExternalPtvE(pm,exam):
 #procedure CreateComplementExternalPtvE ends
 
 
-# Utility function to retrieve a unique plan name
-def UniquePlanName(name, pat):
-  for p in pat.TreatmentPlans:
+# Utility function to retrieve a unique plan name in a given case
+def UniquePlanName(name, cas):
+  for p in cas.TreatmentPlans:
     if name == p.Name:
       name = name + '_1'
-      name = UniquePlanName(name, pat)
+      name = UniquePlanName(name, cas)
   return name
 
 # Utility function that loads a plan and beam set into GUI
-def LoadPlanAndBeamSet(patient, plan, beamset):
+def LoadPlanAndBeamSet(patient, case, plan, beamset):
   # load plan
   planFilter = {"Name":plan.Name}
-  planInfos = patient.QueryPlanInfo(Filter = planFilter)
+  planInfos = patient.case.QueryPlanInfo(Filter = planFilter)
   if len(planInfos) != 1:
     raise Exception('Failed plan query (nr of plan infos = {0})'.format(len(planInfos)))
-  patient.LoadPlan(PlanInfo = {"Name": "^" + plan.Name + "$"})
+  patient.case.LoadPlan(PlanInfo = {"Name": "^" + plan.Name + "$"})
   # load beam set  
   beamsetInfos = plan.QueryBeamSetInfo(Filter = {"Name":beamset.DicomPlanLabel})
   if len(beamsetInfos) != 1:
