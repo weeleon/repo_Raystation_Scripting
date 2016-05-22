@@ -14,16 +14,6 @@ from PROS_Alle_Definitions import *
 defaultPrescDose = 7800 #the absolute prescribed dose in cGy
 defaultFractions = 39 #standard number of fractions
 
-# DEFINE THE NAMES OF THE STANDARD CLINICAL GOALS AND OPTIMIZATION FUNCTIONS
-templateClinicalGoals = 'Pros C - Clinical Goals'
-templateOptimizationFunctions = 'Pros C - Objective Functions'
-#templateOptimizationFunctions = 'Pros C - MCO Tradeoffs' #the other alternative is MCO
-# 
-# names of the other clinical goals and optimisation templates
-#templateClinicalGoals = 'Pros B - Clinical Goals'
-#templateClinicalGoals = 'Pros N - Clinical Goals'
-#templateClinicalGoals = 'Pros S - Clinical Goals'
-
 # NOTE A TEMPLATE BEAMSET IS NOT DEFINED THROUGH A FUNCTION CALL TO APPLY A TEMPLATE
 # but rather each field in the beamset has been explicitly defined using
 # the 'CreatePhotonBeam' method acting on a BeamSet instance - see lines in script
@@ -31,73 +21,130 @@ templateOptimizationFunctions = 'Pros C - Objective Functions'
 # Define null filter
 filter = {}
 
-# Get handle to patient db
-db = get_current('PatientDB')
+# Get handle to current patient database
+patient_db = get_current('PatientDB')
 
 # Define patient and examination handles
 patient = get_current('Patient')
 examination = get_current('Examination')
+case = get_current('Case')
 
-# RESET current simulation modality to the REQUIRED HU-DENSITY MAPPING
-examination.EquipmentInfo.SetImagingSystemReference(ImagingSystemName = densityConversionTable)
-#patient.Save()
+# Define the workflow for the autoplan step
+# 1. Confirm that all mandatory structures exist and have non-zero volumes
+# 2. Assign correct CT to Density Table
+# 3. Define density override material for region around prostate markers
+# 4. Grow all required volumes and conformity structures
+# 5. Create new plan with unique name
+# 6. Create first beam set
+# 7. Set default dose grid
+# 8. Load beam(s) list
+# 9. Load clinical goals list
+# 10. Load cost functions list
+# 11. Load optimization settings
+# 12. Optimization first-run
+# 13. Compute full dose
+# -- repeat from step 6 if more than one beam set is required f.ex. Prost Type B
 
-# EXTERNAL body contour will be created using threshold-based segmentation
-with CompositeAction('Create External (External)'):
-	patient.PatientModel.CreateRoi(Name=external, Color="Orange", Type="External", TissueName=None, RoiMaterial=None)
-	patient.PatientModel.RegionsOfInterest[external].CreateExternalGeometry(Examination=examination, ThresholdLevel=externalContourThreshold)
-	# CompositeAction ends 
 
-# FEMORALS HEADS and BLADDER will be approximated using built-in MALE PELVIS Model Based Segmentation
-get_current("ActionVisibility:Internal") # needed due to that MBS actions not visible in evaluation version.
-patient.PatientModel.MBSAutoInitializer(MbsRois=[
-	{ 'CaseType': "PelvicMale", 'ModelName': "Bladder", 'RoiName': bladder, 'RoiColor': colourBladder },
+# 1. Check structure set
+# -------- Define composite handle for PATIENT ANATOMY MODELLING
+pm = case.PatientModel
+#
+#
+#
+# ----------- only for future workflow
+# EXTERNAL body contour will be created using scripted threshold-based segmentation
+# In future, we will initialize an empty structure set with the following structures
+# BLAERE
+# RECTUM
+# ANAL CANAL
+# BULBUS PENIS
+# TESTES
+# CTV-T
+# CTV-SV *where applicable
+#
+#
+#with CompositeAction('Create External (External)'):
+#	pm.CreateRoi(Name=external, Color="Orange", Type="External", TissueName=None, RoiMaterial=None)
+#	pm.RegionsOfInterest[external].CreateExternalGeometry(Examination=examination, ThresholdLevel=externalContourThreshold)
+#	# CompositeAction ends
+#
+#
+
+
+# 2. Assign CT Density Table
+# OVERWRITE current simulation modality to the REQUIRED density table name
+try:
+	examination.EquipmentInfo.SetImagingSystemReference(ImagingSystemName = densityConversionTable)
+except Exception:
+	print 'Failed to find matching name in list of commissioned CT scanners'
+
+
+# 3. Define density override material for region adjacent to fiducial markers
+# find muscle in the materials template and clone it as soft tissue with density override 1.060 g/ccm
+try:
+	index = IndexOfMaterial(patient_db.TemplateMaterials[0].Materials,'Muscle')
+	pm.CreateMaterial(BaseOnMaterial=patient_db.TemplateMaterials[0].Materials[index], Name = "IcruSoftTissue", MassDensityOverride = 1.060)
+except Exception:
+	print 'Failed to generate override ROI. Continues...'
+# ------- GROW DENSITY OVERRIDE REGION AROUND IMPLANTED GOLD MARKERS
+try:
+	index = IndexOfMaterial(pm.Materials,'IcruSoftTissue')
+	OverrideFiducialsDensity(pm,examination,index)
+except Exception:
+	print 'Failed to complete soft tissue density override around fiducials markers. Continues...'
+
+
+# 4. Grow all required structures from the initial set
+# --------- FEMORALS HEADS will be approximated using built-in MALE PELVIS Model Based Segmentation
+#get_current("ActionVisibility:Internal") # needed due to that MBS actions not visible in evaluation version.
+pm.MBSAutoInitializer(MbsRois=[
 	{ 'CaseType': "PelvicMale", 'ModelName': "FemoralHead (Left)", 'RoiName': femHeadLeft, 'RoiColor': colourCaputFemori }, 
 	{ 'CaseType': "PelvicMale", 'ModelName': "FemoralHead (Right)", 'RoiName': femHeadRight, 'RoiColor': colourCaputFemori }],
 	CreateNewRois=True, Examination=examination, UseAtlasBasedInitialization=True)
-# adapt model based segmentation for bladder and femoral heads
-patient.PatientModel.AdaptMbsMeshes(Examination=examination, RoiNames=[bladder, femHeadLeft, femHeadRight], CustomStatistics=None, CustomSettings=None)
-#patient.Save()
-
-# --- IMPORTANT : CREATE NEW MATERIAL BASED ON ATOMIC COMPOSITIONS OF STANDARD MUSCLE -> copy as SoftTissue with density override 1.060 g/ccm
-#standard muscle is "db.TemplateMaterials[0].Materials[14]"
+pm.AdaptMbsMeshes(Examination=examination, RoiNames=[bladder, femHeadLeft, femHeadRight], CustomStatistics=None, CustomSettings=None)
+#
+# ---------- GROW RECTAL HELP VOLUME FOR IGRT
+CreateWallHvRectum(pm,examination)
+#
+# ---------- GROW ALL PTVs
+CreateMarginPtvT(pm,examination) #all prostate types
+CreateMarginPtvSV(pm,examination) #all prostate types except Type A
+CreateUnionPtvTSV(pm,examination) #all prostate types except Type A
+#
+# ----------- Conformity structure - Wall; PTV-TSV+5mm
 try:
-	patient.PatientModel.CreateMaterial(BaseOnMaterial=db.TemplateMaterials[0].Materials[14], Name = "SoftTissue", MassDensityOverride = 1.060)
+	pm.CreateRoi(Name=wall5mmPtvTSV, Color="Blue", Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[wall5mmPtvTSV].SetWallExpression(SourceRoiName=ptvT, OutwardDistance=0.5, InwardDistance=0)
+	pm.RegionsOfInterest[wall5mmPtvTSV].UpdateDerivedGeometry(Examination=exam)
 except Exception:
-	print 'Failed to generate override ROI. Continues...'
-
-# GROW DENSITY OVERRIDE REGION AROUND IMPLANTED GOLD MARKERS
-OverrideFiducialsDensity(patient.PatientModel,examination)
-
-# GROW RECTAL HELP VOLUME FOR IGRT
-CreateWallHvRectum(patient.PatientModel,examination)
-
-# PLAN PREPARATION COMPLETE - save the active plan and manually check/edit plan before inverse planning
+	print 'Failed to create Wall;PTV-TSV+5mm. Continues ...'
+#
+#------------- Suppression roi for low dose wash - Ext-(PTV-TSV+5mm)
+try :
+	pm.CreateRoi(Name=complementExt5mmPtvTsv, Color="Gray", Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[complementExt5mmPtvTsv].SetAlgebraExpression(
+		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
+		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+	pm.RegionsOfInterest[complementExt5mmPtvTsv].UpdateDerivedGeometry(Examination=exam)
+except Exception:
+		print 'Failed to create Ext-(PTV-TSV+5mm). Continues...'
+#
+# ------------- ANATOMY PREPARATION COMPLETE
+# --------- save the active plan
 patient.Save()
 
-#
-# - PLAN CREATION BEGINS
-#
-# Define plan set and beam set and density dataset handles
-planName = 'ProstC_78_39'
-planName = UniquePlanName(planName, patient) #auto-generate a unique plan name if ProstC_78_39 already exists
-beamSetImrtName = 'Primaer' #prepares a 7-field IMRT standard primary beamset
-beamSetBoostName = 'Boost' #prepares a 7-field IMRT boost beamset
-examinationName = examination.Name
 
-# GROW PLANNING VOLUMES AND STANDARD MARGINS FOR PROSTATA TYPE C
-CreateMarginPtvT(patient.PatientModel,examination) #all prostate types
-CreateComplementBladderPtvT(patient.PatientModel,examination) #all prostate types
-CreateComplementRectumPtvT(patient.PatientModel,examination) #all prostate types
-CreateWallPtvT(patient.PatientModel,examination) #all prostate types
-CreateComplementExternalPtvT(patient.PatientModel,examination) #all prostate types
+#CreateComplementBladderPtvT(patient.PatientModel,examination) #all prostate types
+#CreateComplementRectumPtvT(patient.PatientModel,examination) #all prostate types
+#CreateWallPtvT(patient.PatientModel,examination) #all prostate types
+#CreateComplementExternalPtvT(patient.PatientModel,examination) #all prostate types
 
-CreateMarginPtvSV(patient.PatientModel,examination) #all prostate types except Type A
-CreateUnionPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
-CreateComplementBladderPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
-CreateComplementRectumPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
-CreateWallPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
-CreateComplementExternalPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
+#CreateComplementBladderPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
+#CreateComplementRectumPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
+#CreateWallPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
+#CreateComplementExternalPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
 
 #CreateMarginPtvE(patient.PatientModel,examination) #only for Type N+
 #CreateTransitionPtvTsvPtvE(patient.PatientModel,examination) #only for Type N+
@@ -109,59 +156,79 @@ CreateComplementExternalPtvTSV(patient.PatientModel,examination) #all prostate t
 #CreateWallPtvE(patient.PatientModel,examination) #only for Type N+
 #CreateComplementExternalPtvE(patient.PatientModel,examination) #only for Type N+
 
-# HELP VOLUME PREPARATION COMPLETE - save the active plan
-patient.Save()
 
 
-# Setup a standard IMRT protocol plan
+
+# 5 - 7. Define unique plan, beamset and dosegrid
+#---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
+planName = 'ProstC_78_39'
+planName = UniquePlanName(planName, case)
+#
+beamSetPrimaryName = 'Arc1' #prepares a single CC arc VMAT for the primary field
+examinationName = examination.Name
+#
+# --------- Setup a standard VMAT protocol plan
 with CompositeAction('Adding plan with name {0} '.format(planName)):
     # add plan
-    plan = patient.AddNewPlan(PlanName=planName, Comment="Prostate IMRT auto-plan by Len Wee", ExaminationName=examinationName)
+    plan = case.AddNewPlan(PlanName=planName, Comment="Single CC arc prostate VMAT ", ExaminationName=examinationName)
 	# set standard dose grid size
     plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
-	# how to set the dose grid size to cover
-	#
-    # add beam set
-    beamSetImrt = plan.AddNewBeamSet(Name = beamSetImrtName, ExaminationName = examinationName,
+	# set the dose grid size to cover
+    # add only one beam set
+    beamSetArc1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName,
 		MachineName = defaultLinac, NominalEnergy = None, Modality = "Photons",
-		TreatmentTechnique = "SMLC", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractions,
+		TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractions,
 		CreateSetupBeams = False)
-
 # Save the current patient
 patient.Save()
 
-# Load the plan and first beamset into the system
-LoadPlanAndBeamSet(patient, plan, beamSetImrt)
 
-# Create prescription, clinical goals and optimisation functions for the first beam set
-with CompositeAction('Add prescription, beams, clinical goals, optimization functions'):
-	# add prescription
-	beamSetImrt.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "AverageDose", DoseValue = defaultPrescDose, DoseVolume = 0, RelativePrescriptionLevel = 1)
-	#set the planning isocenter to the centre of the reference ROI
-	isocenter = patient.PatientModel.StructureSets[examinationName].RoiGeometries[ptvTSV].GetCenterOfRoi()
-	# add 7 static IMRT fields around the ROI-based isocenter
-	beamSetImrt.CreatePhotonBeam(Name = '1; T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	beamSetImrt.CreatePhotonBeam(Name = '2; T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	beamSetImrt.CreatePhotonBeam(Name = '3; T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	beamSetImrt.CreatePhotonBeam(Name = '4; T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	beamSetImrt.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	# import clinical goals from a predefined template
-	plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=db.TemplateTreatmentOptimizations[templateClinicalGoals])
-	# import optimization functions from a predefined template
-	plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=db.TemplateTreatmentOptimizations[templateOptimizationFunctions])
+# Load the current plan and beamset into the system
+LoadPlanAndBeamSet(case, plan, beamSetArc1)
 
+
+# 9 - 11. Create beam list, clinical goals and optimisation functions for the first beam set
+with CompositeAction('Add beams, clinical goals and optimization functions'):
+	# ----- no need to add prescription for dynamic delivery
+	#beamSetArc1.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "AverageDose", DoseValue = defaultPrescDose, DoseVolume = 0, RelativePrescriptionLevel = 1)
+	#
+	# ----- set the plan isocenter to the centre of the reference ROI
+	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSV].GetCenterOfRoi()
+	#
+	# ------ load single counterclockwise full arc
+	beamSetArc1.CreateArcBeam(Name='Arc1', Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	#
+	# deprecate - add 7 static IMRT fields around the ROI-based isocenter
+	#beamSetImrt.CreatePhotonBeam(Name = '1; T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	#beamSetImrt.CreatePhotonBeam(Name = '2; T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	#beamSetImrt.CreatePhotonBeam(Name = '3; T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	#beamSetImrt.CreatePhotonBeam(Name = '4; T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	#beamSetImrt.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	#beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	#beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	#
+	# ------- import clinical goals from a predefined template
+	plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
+	#
+	# ------- import optimization functions from a predefined template
+	plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
 # Save the current beamset
 patient.Save()
-	
-# run optimization for the IMRT plan
+
+
+# 12. run optimization for the VMAT plan
 plan.PlanOptimizations[0].RunOptimization()	
 
-# compute final dose
-beamSetImrt.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
+
+# 13. compute final dose
+beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
+
 
 # Save final
 patient.Save()
 #end of AUTOPLAN
+
+
+
+
 

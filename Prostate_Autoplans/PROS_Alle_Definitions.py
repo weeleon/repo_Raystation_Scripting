@@ -9,14 +9,15 @@ externalContourThreshold = -150
 factoryContourThreshold = -250
 
 
-# DEFINE A MANDATORY SET OF INITAL STRUCTURES
-# ------ PLAN NEEDS TO HAVE THESE STRUCTURES DEFINED BEFORE EXECUTING THE SCRIPT
+# DEFINE A MANDATORY SET OF INITIAL STRUCTURES
+# ------ PLAN NEEDS TO HAVE THESE STRUCTURES DEFINED BEFORE EXECUTING THE AUTOPLAN SCRIPT
 ctvT = 'CTV-T'
 ctvSV = 'CTV-SV' #required in Type B and C plans
 ctvE = 'CTV-E' #required in Type N plans
 analCanal = 'OR; Anal Canal'
 penileBulb = 'OR; Bulbus penis'
 rectum = 'OR; Rectum'
+bladder = 'OR; Blaere'
 bowel = 'OR; Tarm' #only exists for N+ disease
 testes = 'OR; Testes'
 fiducial1 = 'S1' #does not exist for salvage cases
@@ -30,18 +31,17 @@ fiducial6 = 'S6' #may or may not exist for any prostate plan
 external = 'External'
 femHeadLeft = 'OR; Cap fem dex'
 femHeadRight = 'OR; Cap fem sin'
-bladder = 'OR; Blaere'
 ptvT = 'PTV-T'
 ptvSV = 'PTV-SV'
 ptvTSV = 'PTV-TSV'
 ptvE = 'PTV-E'
 hvRect = 'HV-Rectum'
-marker1 = 'Mk1'
-marker2 = 'Mk2'
-marker3 = 'Mk3'
-marker4 = 'Mk4'
-marker5 = 'Mk5'
-marker6 = 'Mk6'
+marker1 = 'Mark1'
+marker2 = 'Mark2'
+marker3 = 'Mark3'
+marker4 = 'Mark4'
+marker5 = 'Mark5'
+marker6 = 'Mark6'
 
 # DEFINE A STANDARD SET OF STRUCTURE COLOURS
 # colour codes imported from Oncentra
@@ -83,13 +83,20 @@ complementRectumPtvTSV = 'OR; Rectum-(PTV-TSV+5mm)'
 complementRectumPtvE = 'OR; Rectum-(PTV-E+5mm)'
 complementBowelPtvTSV = 'OR; Tarm-(PTV-TSV+5mm)'
 complementBowelPtvE = 'OR; Tarm-(PTV-E+5mm)'
-wallPtvT = 'Wall;(PTV-T)+5mm'
-wallPtvTSV = 'Wall;(PTV-TSV)+5mm'
-wallPtvE = 'Wall;(PTV-E)+5mm'
+
+wall5mmPtvT = 'Wall; PTV-T+5mm'
+wall5mmPtvTSV = 'Wall; PTV-TSV+5mm'
+wall5mmPtvE = 'Wall; PTV-E+5mm'
+wall10mmPtvTSV = 'Wall; PTV-TSV+10mm'
+wall10mmPtvE = 'Wall; PTV-E+10mm'
+
 transitionTSVtoE = 'PTV-E-(PTV-TSV+8mm)'
-complementExternalPtvT = 'External-(PTV-T+5mm)'
-complementExternalPtvTsv = 'External-(PTV-TSV+5mm)'
-complementExternalPtvE = 'External-(PTV-E)'
+
+complementExt5mmPtvT = 'Ext-(PTV-T+5mm)'
+complementExt5mmPtvTsv = 'Ext-(PTV-TSV+5mm)'
+complementExt5mmPtvE = 'Ext-(PTV-E+5mm)'
+complementExt10mmPtvTsv = 'Ext-(PTV-TSV+10mm)'
+complementExt10mmPtvE = 'Ext-(PTV-E+10mm)'
 
 
 # DEFINE THE STANDARD PLANNING AND PRESCRIPTION PARAMETERS
@@ -99,7 +106,20 @@ defaultPhotonEn = 6 #standard photon beam modality in units of MV
 
 
 # DEFINE THE STANDARD TEMPLATES AND OPTIMIZATION FUNCTIONS
+defaultClinicalGoalsProstC = 'ProstC_Clinical_Goals_Template'
+defaultClinicalGoalsProstA = 'ProstA_Clinical_Goals_Template'
+defaultClinicalGoalsProstBPr = 'ProstBPr_Clinical_Goals_Template'
+defaultClinicalGoalsProstBBo = 'ProstBBo_Clinical_Goals_Template'
+defaultClinicalGoalsProstB = 'ProstB_Clinical_Goals_Template'
 
+defaultOptimVmatProstC = 'ProstC_VMAT_1arc_Optimization'
+defaultOptimVmatProstA = 'ProstA_VMAT_1arc_Optimization'
+defaultOptimVmatProstBBo = 'ProstBBo_VMAT_1arc_Optimization'
+defaultOptimVmatProstBPr = 'ProstBPr_VMAT_1arc_Optimization'
+
+# DEFINE THE STANDARD BEAM LIST NAMES
+defaultFullArcCC = ''
+defaultFullArcCW = ''
 
 
 # IMPORTANT - MODIFY WITH CAUTION - STANDARD PROCEDURES FOR AUTOPLANNING WORKFLOW
@@ -119,104 +139,176 @@ def CreateWallHvRectum(pm,exam):
 		print 'Failed to generate HV-Rectum. Continues...'
 #procedure CreateWallHvRectum ends
 
-def OverrideFiducialsDensity(pm,exam):
+def OverrideFiducialsDensity(pm,exam,i):
 # 19) creation of density over-rides in concentric rings around a fiducial
 	#fiducial number 1
 	try:
-		pm.CreateRoi(Name=fiducial1, Color=colourMarker1, Type="Marker", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[fiducial1].SetAlgebraExpression(
-				ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [fiducial1], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
-				ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [fiducial1], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.1, 'Inferior': 0.1, 'Anterior': 0.1, 'Posterior': 0.1, 'Right': 0.1, 'Left': 0.1 } },
-				ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[fiducial1].SetRoiMaterial(Material = patient.PatientModel.Materials[0])
-		pm.RegionsOfInterest[fiducial1].UpdateDerivedGeometry(Examination=exam)
+		coord = pm.StructureSets[exam.Name].PoiGeometries[fiducial1].Point
+		# --- set a new empty roi at this coordinate position
+		pm.CreateRoi(Name='Temp1', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
+		# --- draw a 3mm spherical roi around the nominated poi
+		pm.RegionsOfInterest['Temp1'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
+		pm.RegionsOfInterest['Temp1'].UpdateDerivedGeometry(Examination=exam)
+		# --- draw a 7mm-wide wall region around the temporary roi
+		pm.CreateRoi(Name=marker1, Color=colourMarker1, Type="Marker", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[marker1].SetWallExpression(SourceRoiName='Temp1', OutwardDistance=0.7, InwardDistance=0)
+		pm.RegionsOfInterest[marker1].UpdateDerivedGeometry(Examination=exam)
+		# --- reset the density override in this region to the newly created material (index from args)
+		pm.RegionsOfInterest[marker1].SetRoiMaterial(Material = pm.Materials[i])
+		pm.RegionsOfInterest[marker1].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_1 override ROI. Continues...'
+	#no further need for the initial poi
 	try:
-		pm.RegionsOfInterest[fiducial1].DeleteRoi()
+		pm.PointsOfInterest[fiducial1].DeleteRoi()
 	except Exception:
-		print 'Could not delete fiducial1 ROI. Continues...'
+		print 'Error cleaning up marker 1 source POI. Continues...'
+	#no further need for the temporary structure
+	try:
+		pm.RegionsOfInterest['Temp1'].DeleteRoi()
+	except Exception:
+		print 'Error cleaning up marker 1 source ROI. Continues...'
 	#
 	#fiducial number 2
 	try:
-		pm.CreateRoi(Name=fiducial2, Color=colourMarker2, Type="Marker", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[fiducial2].SetAlgebraExpression(
-				ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [fiducial2], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
-				ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [fiducial2], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.1, 'Inferior': 0.1, 'Anterior': 0.1, 'Posterior': 0.1, 'Right': 0.1, 'Left': 0.1 } },
-				ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[fiducial2].SetRoiMaterial(Material = patient.PatientModel.Materials[0])
-		pm.RegionsOfInterest[fiducial2].UpdateDerivedGeometry(Examination=exam)
+		coord = pm.StructureSets[exam.Name].PoiGeometries[fiducial2].Point
+		# --- set a new empty roi at this coordinate position
+		pm.CreateRoi(Name='Temp2', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
+		# --- draw a 3mm spherical roi around the nominated poi
+		pm.RegionsOfInterest['Temp2'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
+		pm.RegionsOfInterest['Temp2'].UpdateDerivedGeometry(Examination=exam)
+		# --- draw a 7mm-wide wall region around the temporary roi
+		pm.CreateRoi(Name=marker2, Color=colourMarker2, Type="Marker", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[marker2].SetWallExpression(SourceRoiName='Temp2', OutwardDistance=0.7, InwardDistance=0)
+		pm.RegionsOfInterest[marker2].UpdateDerivedGeometry(Examination=exam)
+		# --- reset the density override in this region to the newly created material (index from args)
+		pm.RegionsOfInterest[marker2].SetRoiMaterial(Material = pm.Materials[i])
+		pm.RegionsOfInterest[marker2].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_2 override ROI. Continues...'
+	#no further need for the initial poi
 	try:
-		pm.RegionsOfInterest[fiducial2].DeleteRoi()
+		pm.PointsOfInterest[fiducial2].DeleteRoi()
 	except Exception:
-		print 'Could not delete fiducial2 ROI. Continues...'
+		print 'Error cleaning up marker 2 source POI. Continues...'
+	#no further need for the temporary structure
+	try:
+		pm.RegionsOfInterest['Temp2'].DeleteRoi()
+	except Exception:
+		print 'Error cleaning up marker 2 source ROI. Continues...'
 	#
 	#fiducial number 3
 	try:
-		pm.CreateRoi(Name=fiducial3, Color=colourMarker3, Type="Marker", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[fiducial3].SetAlgebraExpression(
-				ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [fiducial3], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
-				ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [fiducial3], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.1, 'Inferior': 0.1, 'Anterior': 0.1, 'Posterior': 0.1, 'Right': 0.1, 'Left': 0.1 } },
-				ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[fiducial3].SetRoiMaterial(Material = patient.PatientModel.Materials[0])
-		pm.RegionsOfInterest[fiducial3].UpdateDerivedGeometry(Examination=exam)
+		coord = pm.StructureSets[exam.Name].PoiGeometries[fiducial3].Point
+		# --- set a new empty roi at this coordinate position
+		pm.CreateRoi(Name='Temp3', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
+		# --- draw a 3mm spherical roi around the nominated poi
+		pm.RegionsOfInterest['Temp3'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
+		pm.RegionsOfInterest['Temp3'].UpdateDerivedGeometry(Examination=exam)
+		# --- draw a 7mm-wide wall region around the temporary roi
+		pm.CreateRoi(Name=marker3, Color=colourMarker3, Type="Marker", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[marker3].SetWallExpression(SourceRoiName='Temp3', OutwardDistance=0.7, InwardDistance=0)
+		pm.RegionsOfInterest[marker3].UpdateDerivedGeometry(Examination=exam)
+		# --- reset the density override in this region to the newly created material (index from args)
+		pm.RegionsOfInterest[marker3].SetRoiMaterial(Material = pm.Materials[i])
+		pm.RegionsOfInterest[marker3].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_3 override ROI. Continues...'
+	#no further need for the initial poi
 	try:
-		pm.RegionsOfInterest[fiducial3].DeleteRoi()
+		pm.PointsOfInterest[fiducial3].DeleteRoi()
 	except Exception:
-		print 'Could not delete fiducial3 ROI. Continues...'
-	#
-	#fiducial number 4
+		print 'Error cleaning up marker 3 source POI. Continues...'
+	#no further need for the temporary structure
 	try:
-		pm.CreateRoi(Name=fiducial4, Color=colourMarker4, Type="Marker", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[fiducial4].SetAlgebraExpression(
-				ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [fiducial4], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
-				ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [fiducial4], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.1, 'Inferior': 0.1, 'Anterior': 0.1, 'Posterior': 0.1, 'Right': 0.1, 'Left': 0.1 } },
-				ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[fiducial4].SetRoiMaterial(Material = patient.PatientModel.Materials[0])
-		pm.RegionsOfInterest[fiducial4].UpdateDerivedGeometry(Examination=exam)
+		pm.RegionsOfInterest['Temp3'].DeleteRoi()
+	except Exception:
+		print 'Error cleaning up marker 3 source ROI. Continues...'
+	#
+	#fiducial number 4 - might not exist
+	try:
+		coord = pm.StructureSets[exam.Name].PoiGeometries[fiducial4].Point
+		# --- set a new empty roi at this coordinate position
+		pm.CreateRoi(Name='Temp4', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
+		# --- draw a 3mm spherical roi around the nominated poi
+		pm.RegionsOfInterest['Temp4'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
+		pm.RegionsOfInterest['Temp4'].UpdateDerivedGeometry(Examination=exam)
+		# --- draw a 7mm-wide wall region around the temporary roi
+		pm.CreateRoi(Name=marker4, Color=colourMarker4, Type="Marker", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[marker4].SetWallExpression(SourceRoiName='Temp4', OutwardDistance=0.7, InwardDistance=0)
+		pm.RegionsOfInterest[marker4].UpdateDerivedGeometry(Examination=exam)
+		# --- reset the density override in this region to the newly created material (index from args)
+		pm.RegionsOfInterest[marker4].SetRoiMaterial(Material = pm.Materials[i])
+		pm.RegionsOfInterest[marker4].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_4 override ROI. Continues...'
+	#no further need for the initial poi
 	try:
-		pm.RegionsOfInterest[fiducial4].DeleteRoi()
+		pm.PointsOfInterest[fiducial4].DeleteRoi()
 	except Exception:
-		print 'Could not delete fiducial4 ROI. Continues...'
-	#
-	#fiducial number 5
+		print 'Error cleaning up marker 4 source POI. Continues...'
+	#no further need for the temporary structure
 	try:
-		pm.CreateRoi(Name=fiducial5, Color=colourMarker5, Type="Marker", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[fiducial5].SetAlgebraExpression(
-				ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [fiducial5], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
-				ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [fiducial5], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.1, 'Inferior': 0.1, 'Anterior': 0.1, 'Posterior': 0.1, 'Right': 0.1, 'Left': 0.1 } },
-				ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[fiducial5].SetRoiMaterial(Material = patient.PatientModel.Materials[0])
-		pm.RegionsOfInterest[fiducial5].UpdateDerivedGeometry(Examination=exam)
+		pm.RegionsOfInterest['Temp4'].DeleteRoi()
+	except Exception:
+		print 'Error cleaning up marker 4 source ROI. Continues...'
+	#
+	#fiducial number 5 - might not exist
+	try:
+		coord = pm.StructureSets[exam.Name].PoiGeometries[fiducial5].Point
+		# --- set a new empty roi at this coordinate position
+		pm.CreateRoi(Name='Temp5', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
+		# --- draw a 3mm spherical roi around the nominated poi
+		pm.RegionsOfInterest['Temp5'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
+		pm.RegionsOfInterest['Temp5'].UpdateDerivedGeometry(Examination=exam)
+		# --- draw a 7mm-wide wall region around the temporary roi
+		pm.CreateRoi(Name=marker5, Color=colourMarker5, Type="Marker", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[marker5].SetWallExpression(SourceRoiName='Temp5', OutwardDistance=0.7, InwardDistance=0)
+		pm.RegionsOfInterest[marker5].UpdateDerivedGeometry(Examination=exam)
+		# --- reset the density override in this region to the newly created material (index from args)
+		pm.RegionsOfInterest[marker5].SetRoiMaterial(Material = pm.Materials[i])
+		pm.RegionsOfInterest[marker5].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_5 override ROI. Continues...'
+	#no further need for the initial poi
 	try:
-		pm.RegionsOfInterest[fiducial5].DeleteRoi()
+		pm.PointsOfInterest[fiducial5].DeleteRoi()
 	except Exception:
-		print 'Could not delete fiducial5 ROI. Continues...'
-	#
-	#fiducial number 6
+		print 'Error cleaning up marker 5 source POI. Continues...'
+	#no further need for the temporary structure
 	try:
-		pm.CreateRoi(Name=fiducial6, Color=colourMarker6, Type="Marker", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[fiducial6].SetAlgebraExpression(
-				ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [fiducial6], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
-				ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [fiducial6], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.1, 'Inferior': 0.1, 'Anterior': 0.1, 'Posterior': 0.1, 'Right': 0.1, 'Left': 0.1 } },
-				ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[fiducial6].SetRoiMaterial(Material = patient.PatientModel.Materials[0])
-		pm.RegionsOfInterest[fiducial6].UpdateDerivedGeometry(Examination=exam)
+		pm.RegionsOfInterest['Temp5'].DeleteRoi()
+	except Exception:
+		print 'Error cleaning up marker 5 source ROI. Continues...'
+	#
+	#fiducial number 6 - might not exist
+	try:
+		coord = pm.StructureSets[exam.Name].PoiGeometries[fiducial6].Point
+		# --- set a new empty roi at this coordinate position
+		pm.CreateRoi(Name='Temp6', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
+		# --- draw a 3mm spherical roi around the nominated poi
+		pm.RegionsOfInterest['Temp6'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
+		pm.RegionsOfInterest['Temp6'].UpdateDerivedGeometry(Examination=exam)
+		# --- draw a 7mm-wide wall region around the temporary roi
+		pm.CreateRoi(Name=marker6, Color=colourMarker6, Type="Marker", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[marker6].SetWallExpression(SourceRoiName='Temp6', OutwardDistance=0.7, InwardDistance=0)
+		pm.RegionsOfInterest[marker6].UpdateDerivedGeometry(Examination=exam)
+		# --- reset the density override in this region to the newly created material (index from args)
+		pm.RegionsOfInterest[marker6].SetRoiMaterial(Material = pm.Materials[i])
+		pm.RegionsOfInterest[marker6].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_6 override ROI. Continues...'
+	#no further need for the initial poi
 	try:
-		pm.RegionsOfInterest[fiducial6].DeleteRoi()
+		pm.PointsOfInterest[fiducial6].DeleteRoi()
 	except Exception:
-		print 'Could not delete fiducial6 ROI. Continues...'
-	#procedure OverrideFiducialsDensity ends
+		print 'Error cleaning up marker 6 source POI. Continues...'
+	#no further need for the temporary structure
+	try:
+		pm.RegionsOfInterest['Temp6'].DeleteRoi()
+	except Exception:
+		print 'Error cleaning up marker 6 source ROI. Continues...'
+#procedure OverrideFiducialsDensity ends
 
 def CreateMarginPtvT(pm,exam):
 # 1) create PTV-T
@@ -405,80 +497,15 @@ def CreateComplementBowelPtvE(pm,exam):
 			print 'Failed to create OR; Tarm-(PTV-E+5mm). Continues...'
 #procedure CreateComplementBowelPtvE ends
 
-def CreateWallPtvT(pm,exam):
-# 16) toroidal help volume around PTV-T
-	#Wall;(PTV-T)+5mm
-	try:
-		pm.CreateRoi(Name=wallPtvT, Color="Gray", Type="Organ", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[wallPtvT].SetWallExpression(SourceRoiName=ptvT, OutwardDistance=0.5, InwardDistance=0)
-		pm.RegionsOfInterest[wallPtvT].UpdateDerivedGeometry(Examination=exam)
-	except Exception:
-		print 'Failed to create Wall;(PTV-T)+5mm. Continues ...'
-#procedure CreateWallPtvT ends
-
-def CreateWallPtvTSV(pm,exam):
-# 17) toroidal help volume around PTV-TSV
-	#Wall;(PTV-TSV)+5mm
-	try:
-		pm.CreateRoi(Name=wallPtvTSV, Color="Gray", Type="Organ", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[wallPtvTSV].SetWallExpression(SourceRoiName=ptvTSV, OutwardDistance=0.5, InwardDistance=0)
-		pm.RegionsOfInterest[wallPtvTSV].UpdateDerivedGeometry(Examination=exam)
-	except Exception:
-		print 'Failed to create Wall;(PTV-TSV)+5mm. Continues ...'
-#procedure CreateWallPtvTSV ends
-
-def CreateWallPtvE(pm,exam):
-# 18) toroidal help volume around PTV-E
-	#Wall;(PTV-E)+5mm
-	try:
-		pm.CreateRoi(Name=wallPtvE, Color="Gray", Type="Organ", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[wallPtvE].SetWallExpression(SourceRoiName=ptvE, OutwardDistance=0.5, InwardDistance=0)
-		pm.RegionsOfInterest[wallPtvE].UpdateDerivedGeometry(Examination=exam)
-	except Exception:
-		print 'Failed to create Wall;(PTV-E)+5mm. Continues ...'
-#procedure CreateWallPtvE ends
-
-def CreateComplementExternalPtvT(pm,exam):
-# 20) external complementary volume without (PTV-T)+5mm
-	#External-(PTV-T)
-	try :
-		pm.CreateRoi(Name=complementExternalPtvT, Color=colourComplementExternal, Type="Organ", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[complementExternalPtvT].SetAlgebraExpression(
-			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvT], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
-			ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[complementExternalPtvT].UpdateDerivedGeometry(Examination=exam)
-	except Exception:
-		print 'Failed to create External-(PTV-T). Continues...'
-#procedure CreateComplementExternalPtvT ends
-
-def CreateComplementExternalPtvTSV(pm,exam):
-# 21) external complementary volume without (PTV-TSV)+5mm
-	#External-(PTV-TSV)
-	try :
-		pm.CreateRoi(Name=complementExternalPtvTsv, Color=colourComplementExternal, Type="Organ", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[complementExternalPtvTsv].SetAlgebraExpression(
-			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
-			ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[complementExternalPtvTsv].UpdateDerivedGeometry(Examination=exam)
-	except Exception:
-		print 'Failed to create External-(PTV-TSV). Continues...'
-#procedure CreateComplementExternalPtvTSV ends
-
-def CreateComplementExternalPtvE(pm,exam):
-# 22) external complementary volume without PTV-E
-	#External-(PTV-E)
-	try :
-		pm.CreateRoi(Name=complementExternalPtvE, Color=colourComplementExternal, Type="Organ", TissueName=None, RoiMaterial=None)
-		pm.RegionsOfInterest[complementExternalPtvE].SetAlgebraExpression(
-			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-			ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[complementExternalPtvE].UpdateDerivedGeometry(Examination=exam)
-	except Exception:
-		print 'Failed to create External-(PTV-E). Continues...'
-#procedure CreateComplementExternalPtvE ends
+# Utility function to locate the index position of 'matl' in the materials list 'mlist'
+def IndexOfMaterial(mlist,matl):
+	mindex = 0
+	mi = 0
+	for m in mlist:
+		if m.Name == matl:
+			mindex = mi
+		mi = mi + 1
+	return mindex
 
 
 # Utility function to retrieve a unique plan name in a given case
@@ -489,14 +516,15 @@ def UniquePlanName(name, cas):
       name = UniquePlanName(name, cas)
   return name
 
+
 # Utility function that loads a plan and beam set into GUI
-def LoadPlanAndBeamSet(patient, case, plan, beamset):
+def LoadPlanAndBeamSet(patient, plan, beamset):
   # load plan
   planFilter = {"Name":plan.Name}
-  planInfos = patient.case.QueryPlanInfo(Filter = planFilter)
+  planInfos = patient.QueryPlanInfo(Filter = planFilter)
   if len(planInfos) != 1:
     raise Exception('Failed plan query (nr of plan infos = {0})'.format(len(planInfos)))
-  patient.case.LoadPlan(PlanInfo = {"Name": "^" + plan.Name + "$"})
+  patient.LoadPlan(PlanInfo = {"Name": "^" + plan.Name + "$"})
   # load beam set  
   beamsetInfos = plan.QueryBeamSetInfo(Filter = {"Name":beamset.DicomPlanLabel})
   if len(beamsetInfos) != 1:
