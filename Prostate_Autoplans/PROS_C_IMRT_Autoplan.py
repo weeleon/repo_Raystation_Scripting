@@ -139,7 +139,7 @@ pm.MBSAutoInitializer(MbsRois=[
 	{ 'CaseType': "PelvicMale", 'ModelName': "FemoralHead (Left)", 'RoiName': femHeadLeft, 'RoiColor': colourCaputFemori }, 
 	{ 'CaseType': "PelvicMale", 'ModelName': "FemoralHead (Right)", 'RoiName': femHeadRight, 'RoiColor': colourCaputFemori }],
 	CreateNewRois=True, Examination=examination, UseAtlasBasedInitialization=True)
-pm.AdaptMbsMeshes(Examination=examination, RoiNames=[bladder, femHeadLeft, femHeadRight], CustomStatistics=None, CustomSettings=None)
+pm.AdaptMbsMeshes(Examination=examination, RoiNames=[femHeadLeft, femHeadRight], CustomStatistics=None, CustomSettings=None)
 #
 # ---------- GROW RECTAL HELP VOLUME FOR IGRT
 CreateWallHvRectum(pm,examination)
