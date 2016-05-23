@@ -83,6 +83,10 @@ if (volcheck < 0.1):
 volcheck = roi.RoiGeometries[external].GetRoiVolume()
 if (volcheck < 0.1):
 	raise Exception('Please CHECK contouring - Volume of External might be less than 0.1 ccm!')
+# - check for finite Couch Model volume
+volcheck = roi.RoiGeometries[pelvicCouchModel].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK Couch Model - this geometry might not have been included!')
 #
 #
 # ----------- only for future workflow
