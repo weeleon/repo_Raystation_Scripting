@@ -50,6 +50,39 @@ case = get_current('Case')
 # -------- Define composite handle for PATIENT ANATOMY MODELLING
 pm = case.PatientModel
 #
+roi = pm.StructureSets[examination.Name]
+# - check for finite CTV-T volume
+volcheck = roi.RoiGeometries[ctvT].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK contouring - Volume of CTV-T might be less than 0.1 ccm!')
+# - check for finite CTV-SV volume
+volcheck = roi.RoiGeometries[ctvSV].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK contouring - Volume of CTV-SV might be less than 0.1 ccm!')
+# - check for finite OR; Rectum volume
+volcheck = roi.RoiGeometries[rectum].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK contouring - Volume of OR; Rectum might be less than 0.1 ccm!')
+# - check for finite OR; Blaere volume
+volcheck = roi.RoiGeometries[bladder].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK contouring - Volume of OR; Blaere might be less than 0.1 ccm!')
+# - check for finite OR; Anal Canal volume
+volcheck = roi.RoiGeometries[analCanal].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK contouring - Volume of OR; Anal Canal might be less than 0.1 ccm!')
+# - check for finite OR; Bulbus penis volume
+volcheck = roi.RoiGeometries[penileBulb].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK contouring - Volume of OR; Bulbus penis might be less than 0.1 ccm!')
+# - check for finite OR; Testes volume
+volcheck = roi.RoiGeometries[testes].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK contouring - Volume of OR; Testes might be less than 0.1 ccm!')
+# - check for finite External volume
+volcheck = roi.RoiGeometries[external].GetRoiVolume()
+if (volcheck < 0.1):
+	raise Exception('Please CHECK contouring - Volume of External might be less than 0.1 ccm!')
 #
 #
 # ----------- only for future workflow
@@ -216,16 +249,39 @@ with CompositeAction('Add beams, clinical goals and optimization functions'):
 patient.Save()
 
 
-# 12. run optimization for the VMAT plan
+# 12. set opt parameters and run first optimization for the VMAT plan
+optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
+# - set the maximum limit on the number of iterations
+optimPara.Algorithm.MaxNumberOfIterations = 80
+# - set optimality tolerance level
+optimPara.Algorithm.OptimalityTolerance = 1E-08
+# - set to compute intermediate and final dose
+optimPara.DoseCalculation.ComputeFinalDose = 'True'
+optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
+# - set number of iterations in preparation phase
+optimPara.DoseCalculation.InterationsInPreparationsPhase = 20
+# - constraint arc segmentation for machine deliverability
+optimPara.SegmentConversion.ArcConversionProperties.USeMaxLeafTravelDistancePerDegree = 'True'
+optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
+#
+#
+patient.Save()
+# - execute first run optimization
 plan.PlanOptimizations[0].RunOptimization()	
 
 
-# 13. compute final dose
-beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
+# 13. compute final dose not necessary due to optimization setting
+#beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
 
 # Save final
 patient.Save()
+#
+#
+#
+#
+#
+#
 #end of AUTOPLAN
 
 
