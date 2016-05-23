@@ -152,8 +152,8 @@ CreateUnionPtvTSV(pm,examination) #all prostate types except Type A
 # ----------- Conformity structure - Wall; PTV-TSV+5mm
 try:
 	pm.CreateRoi(Name=wall5mmPtvTSV, Color="Blue", Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[wall5mmPtvTSV].SetWallExpression(SourceRoiName=ptvT, OutwardDistance=0.5, InwardDistance=0)
-	pm.RegionsOfInterest[wall5mmPtvTSV].UpdateDerivedGeometry(Examination=exam)
+	pm.RegionsOfInterest[wall5mmPtvTSV].SetWallExpression(SourceRoiName=ptvTSV, OutwardDistance=0.5, InwardDistance=0)
+	pm.RegionsOfInterest[wall5mmPtvTSV].UpdateDerivedGeometry(Examination=examination)
 except Exception:
 	print 'Failed to create Wall;PTV-TSV+5mm. Continues ...'
 #
@@ -164,7 +164,7 @@ try :
 		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
 		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
 		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-	pm.RegionsOfInterest[complementExt5mmPtvTsv].UpdateDerivedGeometry(Examination=exam)
+	pm.RegionsOfInterest[complementExt5mmPtvTsv].UpdateDerivedGeometry(Examination=examination)
 except Exception:
 		print 'Failed to create Ext-(PTV-TSV+5mm). Continues...'
 #
@@ -213,7 +213,7 @@ with CompositeAction('Adding plan with name {0} '.format(planName)):
 	# set the dose grid size to cover
     # add only one beam set
     beamSetArc1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName,
-		MachineName = defaultLinac, NominalEnergy = None, Modality = "Photons",
+		MachineName = defaultLinac, Modality = "Photons",
 		TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractions,
 		CreateSetupBeams = False)
 # Save the current patient
@@ -245,11 +245,12 @@ with CompositeAction('Add beams, clinical goals and optimization functions'):
 	#beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	#beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	#
-	# ------- import clinical goals from a predefined template
-	plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
-	#
-	# ------- import optimization functions from a predefined template
-	plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
+#
+# ------- import clinical goals from a predefined template
+plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
+#
+# ------- import optimization functions from a predefined template
+plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
 # Save the current beamset
 patient.Save()
 
