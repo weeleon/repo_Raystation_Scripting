@@ -279,9 +279,9 @@ optimPara.Algorithm.OptimalityTolerance = 1E-08
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
 # - set number of iterations in preparation phase
-optimPara.DoseCalculation.InterationsInPreparationsPhase = 20
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
 # - constraint arc segmentation for machine deliverability
-optimPara.SegmentConversion.ArcConversionProperties.USeMaxLeafTravelDistancePerDegree = 'True'
+optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
 #
 
