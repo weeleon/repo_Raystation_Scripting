@@ -490,7 +490,7 @@ def CreateComplementBowelPtvE(pm,exam):
 
 # Utility function to locate the index position of 'matl' in the materials list 'mlist'
 def IndexOfMaterial(mlist,matl):
-	mindex = 0
+	mindex = -1 # if the material is not found in the list then it return a negative value
 	mi = 0
 	for m in mlist:
 		if m.Name == matl:

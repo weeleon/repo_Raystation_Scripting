@@ -119,11 +119,13 @@ except Exception:
 
 # 3. Define density override material for region adjacent to fiducial markers
 # find muscle in the materials template and clone it as soft tissue with density override 1.060 g/ccm
-try:
-	index = IndexOfMaterial(patient_db.TemplateMaterials[0].Materials,'Muscle')
-	pm.CreateMaterial(BaseOnMaterial=patient_db.TemplateMaterials[0].Materials[index], Name = "IcruSoftTissue", MassDensityOverride = 1.060)
-except Exception:
-	print 'Failed to generate override ROI. Continues...'
+test = IndexOfMaterial(pm.Materials,'IcruSoftTissue')
+if test < 0:
+	try:
+		index = IndexOfMaterial(patient_db.TemplateMaterials[0].Materials,'Muscle')
+		pm.CreateMaterial(BaseOnMaterial=patient_db.TemplateMaterials[0].Materials[index], Name = "IcruSoftTissue", MassDensityOverride = 1.060)
+	except Exception:
+		print 'Not able to generate new material based on template material. Continues...'
 # ------- GROW DENSITY OVERRIDE REGION AROUND IMPLANTED GOLD MARKERS
 try:
 	index = IndexOfMaterial(pm.Materials,'IcruSoftTissue')
