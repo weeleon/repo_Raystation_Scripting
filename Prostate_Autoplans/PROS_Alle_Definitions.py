@@ -159,11 +159,6 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.RegionsOfInterest[marker1].SetRoiMaterial(Material = pm.Materials[i])
 	except Exception:
 		print 'Failed to generate Marker_1 override ROI. Continues...'
-	#no further need for the initial poi
-	try:
-		pm.PointsOfInterest[fiducial1].DeleteRoi()
-	except Exception:
-		print 'Error cleaning up marker 1 source POI. Continues...'
 	#no further need for the temporary structure
 	try:
 		pm.RegionsOfInterest['Temp1'].DeleteRoi()
@@ -185,11 +180,6 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.RegionsOfInterest[marker2].SetRoiMaterial(Material = pm.Materials[i])
 	except Exception:
 		print 'Failed to generate Marker_2 override ROI. Continues...'
-	#no further need for the initial poi
-	try:
-		pm.PointsOfInterest[fiducial2].DeleteRoi()
-	except Exception:
-		print 'Error cleaning up marker 2 source POI. Continues...'
 	#no further need for the temporary structure
 	try:
 		pm.RegionsOfInterest['Temp2'].DeleteRoi()
@@ -211,11 +201,6 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.RegionsOfInterest[marker3].SetRoiMaterial(Material = pm.Materials[i])
 	except Exception:
 		print 'Failed to generate Marker_3 override ROI. Continues...'
-	#no further need for the initial poi
-	try:
-		pm.PointsOfInterest[fiducial3].DeleteRoi()
-	except Exception:
-		print 'Error cleaning up marker 3 source POI. Continues...'
 	#no further need for the temporary structure
 	try:
 		pm.RegionsOfInterest['Temp3'].DeleteRoi()
@@ -237,11 +222,6 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.RegionsOfInterest[marker4].SetRoiMaterial(Material = pm.Materials[i])
 	except Exception:
 		print 'Failed to generate Marker_4 override ROI. Continues...'
-	#no further need for the initial poi
-	try:
-		pm.PointsOfInterest[fiducial4].DeleteRoi()
-	except Exception:
-		print 'Error cleaning up marker 4 source POI. Continues...'
 	#no further need for the temporary structure
 	try:
 		pm.RegionsOfInterest['Temp4'].DeleteRoi()
@@ -263,11 +243,6 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.RegionsOfInterest[marker5].SetRoiMaterial(Material = pm.Materials[i])
 	except Exception:
 		print 'Failed to generate Marker_5 override ROI. Continues...'
-	#no further need for the initial poi
-	try:
-		pm.PointsOfInterest[fiducial5].DeleteRoi()
-	except Exception:
-		print 'Error cleaning up marker 5 source POI. Continues...'
 	#no further need for the temporary structure
 	try:
 		pm.RegionsOfInterest['Temp5'].DeleteRoi()
@@ -289,11 +264,6 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.RegionsOfInterest[marker6].SetRoiMaterial(Material = pm.Materials[i])
 	except Exception:
 		print 'Failed to generate Marker_6 override ROI. Continues...'
-	#no further need for the initial poi
-	try:
-		pm.PointsOfInterest[fiducial6].DeleteRoi()
-	except Exception:
-		print 'Error cleaning up marker 6 source POI. Continues...'
 	#no further need for the temporary structure
 	try:
 		pm.RegionsOfInterest['Temp6'].DeleteRoi()
