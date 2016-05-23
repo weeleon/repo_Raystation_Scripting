@@ -151,14 +151,12 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.CreateRoi(Name='Temp1', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
 		# --- draw a 3mm spherical roi around the nominated poi
 		pm.RegionsOfInterest['Temp1'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
-		pm.RegionsOfInterest['Temp1'].UpdateDerivedGeometry(Examination=exam)
 		# --- draw a 7mm-wide wall region around the temporary roi
 		pm.CreateRoi(Name=marker1, Color=colourMarker1, Type="Marker", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[marker1].SetWallExpression(SourceRoiName='Temp1', OutwardDistance=0.7, InwardDistance=0)
 		pm.RegionsOfInterest[marker1].UpdateDerivedGeometry(Examination=exam)
 		# --- reset the density override in this region to the newly created material (index from args)
 		pm.RegionsOfInterest[marker1].SetRoiMaterial(Material = pm.Materials[i])
-		pm.RegionsOfInterest[marker1].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_1 override ROI. Continues...'
 	#no further need for the initial poi
@@ -179,14 +177,12 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.CreateRoi(Name='Temp2', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
 		# --- draw a 3mm spherical roi around the nominated poi
 		pm.RegionsOfInterest['Temp2'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
-		pm.RegionsOfInterest['Temp2'].UpdateDerivedGeometry(Examination=exam)
 		# --- draw a 7mm-wide wall region around the temporary roi
 		pm.CreateRoi(Name=marker2, Color=colourMarker2, Type="Marker", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[marker2].SetWallExpression(SourceRoiName='Temp2', OutwardDistance=0.7, InwardDistance=0)
 		pm.RegionsOfInterest[marker2].UpdateDerivedGeometry(Examination=exam)
 		# --- reset the density override in this region to the newly created material (index from args)
 		pm.RegionsOfInterest[marker2].SetRoiMaterial(Material = pm.Materials[i])
-		pm.RegionsOfInterest[marker2].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_2 override ROI. Continues...'
 	#no further need for the initial poi
@@ -207,14 +203,12 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.CreateRoi(Name='Temp3', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
 		# --- draw a 3mm spherical roi around the nominated poi
 		pm.RegionsOfInterest['Temp3'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
-		pm.RegionsOfInterest['Temp3'].UpdateDerivedGeometry(Examination=exam)
 		# --- draw a 7mm-wide wall region around the temporary roi
 		pm.CreateRoi(Name=marker3, Color=colourMarker3, Type="Marker", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[marker3].SetWallExpression(SourceRoiName='Temp3', OutwardDistance=0.7, InwardDistance=0)
 		pm.RegionsOfInterest[marker3].UpdateDerivedGeometry(Examination=exam)
 		# --- reset the density override in this region to the newly created material (index from args)
 		pm.RegionsOfInterest[marker3].SetRoiMaterial(Material = pm.Materials[i])
-		pm.RegionsOfInterest[marker3].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_3 override ROI. Continues...'
 	#no further need for the initial poi
@@ -235,14 +229,12 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.CreateRoi(Name='Temp4', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
 		# --- draw a 3mm spherical roi around the nominated poi
 		pm.RegionsOfInterest['Temp4'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
-		pm.RegionsOfInterest['Temp4'].UpdateDerivedGeometry(Examination=exam)
 		# --- draw a 7mm-wide wall region around the temporary roi
 		pm.CreateRoi(Name=marker4, Color=colourMarker4, Type="Marker", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[marker4].SetWallExpression(SourceRoiName='Temp4', OutwardDistance=0.7, InwardDistance=0)
 		pm.RegionsOfInterest[marker4].UpdateDerivedGeometry(Examination=exam)
 		# --- reset the density override in this region to the newly created material (index from args)
 		pm.RegionsOfInterest[marker4].SetRoiMaterial(Material = pm.Materials[i])
-		pm.RegionsOfInterest[marker4].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_4 override ROI. Continues...'
 	#no further need for the initial poi
@@ -263,14 +255,12 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.CreateRoi(Name='Temp5', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
 		# --- draw a 3mm spherical roi around the nominated poi
 		pm.RegionsOfInterest['Temp5'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
-		pm.RegionsOfInterest['Temp5'].UpdateDerivedGeometry(Examination=exam)
 		# --- draw a 7mm-wide wall region around the temporary roi
 		pm.CreateRoi(Name=marker5, Color=colourMarker5, Type="Marker", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[marker5].SetWallExpression(SourceRoiName='Temp5', OutwardDistance=0.7, InwardDistance=0)
 		pm.RegionsOfInterest[marker5].UpdateDerivedGeometry(Examination=exam)
 		# --- reset the density override in this region to the newly created material (index from args)
 		pm.RegionsOfInterest[marker5].SetRoiMaterial(Material = pm.Materials[i])
-		pm.RegionsOfInterest[marker5].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_5 override ROI. Continues...'
 	#no further need for the initial poi
@@ -291,14 +281,12 @@ def OverrideFiducialsDensity(pm,exam,i):
 		pm.CreateRoi(Name='Temp6', Color="Fuchsia", Type="Marker", TissueName=None, RoiMaterial=None)
 		# --- draw a 3mm spherical roi around the nominated poi
 		pm.RegionsOfInterest['Temp6'].CreateSphereGeometry( Radius=0.3, Examination=exam, Center={'x':coord.x, 'y':coord.y, 'z':coord.z} )
-		pm.RegionsOfInterest['Temp6'].UpdateDerivedGeometry(Examination=exam)
 		# --- draw a 7mm-wide wall region around the temporary roi
 		pm.CreateRoi(Name=marker6, Color=colourMarker6, Type="Marker", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[marker6].SetWallExpression(SourceRoiName='Temp6', OutwardDistance=0.7, InwardDistance=0)
 		pm.RegionsOfInterest[marker6].UpdateDerivedGeometry(Examination=exam)
 		# --- reset the density override in this region to the newly created material (index from args)
 		pm.RegionsOfInterest[marker6].SetRoiMaterial(Material = pm.Materials[i])
-		pm.RegionsOfInterest[marker6].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to generate Marker_6 override ROI. Continues...'
 	#no further need for the initial poi
