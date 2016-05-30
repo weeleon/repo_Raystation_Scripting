@@ -372,7 +372,7 @@ optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
 #optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 #optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
 # - constrain SMLC segmentation parameters for machine deliverability
-optimPara.SegmentConversion.MaxNumberOfSegment = 70
+optimPara.SegmentConversion.MaxNumberOfSegments = 70
 optimPara.SegmentConversion.MinEquivalentSquare = 2
 optimPara.SegmentConversion.MinLeafEndSeparation = 0.5
 optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 2
