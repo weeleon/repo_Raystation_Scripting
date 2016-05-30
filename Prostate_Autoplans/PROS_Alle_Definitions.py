@@ -111,12 +111,14 @@ defaultPhotonEn = 6 #standard photon beam modality in units of MV
 # DEFINE THE STANDARD TEMPLATES AND OPTIMIZATION FUNCTIONS
 defaultClinicalGoalsProstC = 'ProstC_Clinical_Goals_Template'
 defaultClinicalGoalsProstA = 'ProstA_Clinical_Goals_Template'
+defaultClinicalGoalsProstS = 'ProstS_Clinical_Goals_Template'
 defaultClinicalGoalsProstBPr = 'ProstBPr_Clinical_Goals_Template'
 defaultClinicalGoalsProstBBo = 'ProstBBo_Clinical_Goals_Template'
 defaultClinicalGoalsProstB = 'ProstB_Clinical_Goals_Template'
 
 defaultOptimVmatProstC = 'ProstC_VMAT_1arc_Optimization'
 defaultOptimVmatProstA = 'ProstA_VMAT_1arc_Optimization'
+defaultOptimVmatProstS = 'ProstS_VMAT_1arc_Optimization'
 defaultOptimVmatProstBBo = 'ProstBBo_VMAT_1arc_Optimization'
 defaultOptimVmatProstBPr = 'ProstBPr_VMAT_1arc_Optimization'
 

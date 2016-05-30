@@ -7,9 +7,10 @@ from System.Windows import *
 
 from PROS_Alle_Definitions import *
 
-#### PROSTATE TYPE C AUTO-PLAN
-#### 78Gy/39F Normo-fractionated prescribed to PTV-T and PTV-SV
-#### As a 7-field IMRT beam distribution
+#### PROSTATE TYPE A AUTO-PLAN
+#### 78Gy/39F Normo-fractionated prescribed to PTV-T only
+#### As a VMAT 1 arc solution
+#### With a 7-field IMRT beam as a fall-back plan
 
 defaultPrescDose = 7800 #the absolute prescribed dose in cGy
 defaultFractions = 39 #standard number of fractions
@@ -49,48 +50,37 @@ case = get_current('Case')
 # 1. Check structure set
 # -------- Define composite handle for PATIENT ANATOMY MODELLING
 pm = case.PatientModel
+rois = pm.StructureSets[examination.Name]
 #
-roi = pm.StructureSets[examination.Name]
-# - check for finite CTV-T volume
-volcheck = roi.RoiGeometries[ctvT].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK contouring - Volume of CTV-T might be less than 0.1 ccm!')
-# - check for finite CTV-SV volume
-volcheck = roi.RoiGeometries[ctvSV].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK contouring - Volume of CTV-SV might be less than 0.1 ccm!')
-# - check for finite OR; Rectum volume
-volcheck = roi.RoiGeometries[rectum].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK contouring - Volume of OR; Rectum might be less than 0.1 ccm!')
-# - check for finite OR; Blaere volume
-volcheck = roi.RoiGeometries[bladder].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK contouring - Volume of OR; Blaere might be less than 0.1 ccm!')
-# - check for finite OR; Anal Canal volume
-volcheck = roi.RoiGeometries[analCanal].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK contouring - Volume of OR; Anal Canal might be less than 0.1 ccm!')
-# - check for finite OR; Bulbus penis volume
-volcheck = roi.RoiGeometries[penileBulb].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK contouring - Volume of OR; Bulbus penis might be less than 0.1 ccm!')
-# - check for finite OR; Testes volume
-volcheck = roi.RoiGeometries[testes].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK contouring - Volume of OR; Testes might be less than 0.1 ccm!')
-# - check for finite External volume
-volcheck = roi.RoiGeometries[external].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK contouring - Volume of External might be less than 0.1 ccm!')
-# - check for finite Couch Model volume
-volcheck = roi.RoiGeometries[pelvicCouchModel].GetRoiVolume()
-if (volcheck < 0.1):
-	raise Exception('Please CHECK Couch Model - this geometry might not have been included!')
+#the plan shall NOT be made without the following required Rois
+RequiredRois = [ctvT, rectum, bladder, analCanal, penileBulb, testes, pelvicCouchModel]
 #
+# - confirm that the required rois for autoplanning have been drawn
+minVolume = 1 #at least 1cc otherwise the ROI does not make sense or might be empty
+for r in RequiredRois:
+	try :
+		v = rois.RoiGeometries[r].GetRoiVolume()
+		if v < minVolume :
+			raise Exception('The volume of '+r+' seems smaller than required ('+minVolume+'cc).')
+	except Exception :
+		raise Exception('Please check structure set : '+r+' appears to be missing.')
+
+
+#the script shall REGENERATE each of the following Rois each time
+#therefore if they already exist, delete first
+ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3,
+	marker4, marker5, marker6, ptvT, wall5mmPtvT, complementExt5mmPtvT]
 #
+for sr in ScriptedRois:
+	try:
+		pm.RegionsOfInterest[sr].DeleteRoi()
+		print 'Deleted - scripting will be used to generate fresh '+sr+'.'
+	except Exception:
+		print 'Scripting will be used to generate '+sr+'.'
+
+
 # ----------- only for future workflow
-# EXTERNAL body contour will be created using scripted threshold-based segmentation
+# EXTERNAL body contour will be initially created using threshold-based segmentation
 # In future, we will initialize an empty structure set with the following structures
 # BLAERE
 # RECTUM
@@ -100,13 +90,7 @@ if (volcheck < 0.1):
 # CTV-T
 # CTV-SV *where applicable
 #
-#
-#with CompositeAction('Create External (External)'):
-#	pm.CreateRoi(Name=external, Color="Orange", Type="External", TissueName=None, RoiMaterial=None)
-#	pm.RegionsOfInterest[external].CreateExternalGeometry(Examination=examination, ThresholdLevel=externalContourThreshold)
-#	# CompositeAction ends
-#
-#
+#Then the physician will define finite boundaries for the above ROIs
 
 
 # 2. Assign CT Density Table
@@ -135,6 +119,27 @@ except Exception:
 
 
 # 4. Grow all required structures from the initial set
+# --------- EXTERNAL will be set using threshold contour generate at the user-defined intensity value
+pm.CreateRoi(Name='temp_ext', Color="Orange", Type="External", TissueName=None, RoiMaterial=None)
+pm.RegionsOfInterest['temp_ext'].CreateExternalGeometry(Examination=examination, ThresholdLevel=externalContourThreshold)
+#
+#the above temporary external typically includes bit of sim couch therefore the true
+#External needs to be generated from the temp external
+pm.CreateRoi(Name=external, Color="Orange", Type="Organ", TissueName=None, RoiMaterial=None)
+pm.RegionsOfInterest[external].SetAlgebraExpression(
+		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': ['temp_ext'], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [pelvicCouchModel], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+pm.RegionsOfInterest[external].UpdateDerivedGeometry(Examination=examination)
+pm.RegionsOfInterest[external].SetAsExternal()
+#
+#then remove the temporary external
+pm.RegionsOfInterest['temp_ext'].DeleteRoi()
+#
+#and simplify straggly bits of the remaining true External
+rois.SimplifyContours(RoiNames=[external], RemoveHoles3D='False', RemoveSmallContours='True', AreaThreshold=10, ReduceMaxNumberOfPointsInContours='False', MaxNumberOfPoints=None, CreateCopyOfRoi='False')
+#
+#
 # --------- FEMORALS HEADS will be approximated using built-in MALE PELVIS Model Based Segmentation
 #get_current("ActionVisibility:Internal") # needed due to that MBS actions not visible in evaluation version.
 pm.MBSAutoInitializer(MbsRois=[
@@ -148,27 +153,25 @@ CreateWallHvRectum(pm,examination)
 #
 # ---------- GROW ALL PTVs
 CreateMarginPtvT(pm,examination) #all prostate types
-CreateMarginPtvSV(pm,examination) #all prostate types except Type A
-CreateUnionPtvTSV(pm,examination) #all prostate types except Type A
 #
-# ----------- Conformity structure - Wall; PTV-TSV+5mm
+# ----------- Conformity structure - Wall; PTV-T+5mm
 try:
-	pm.CreateRoi(Name=wall5mmPtvTSV, Color="Blue", Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[wall5mmPtvTSV].SetWallExpression(SourceRoiName=ptvTSV, OutwardDistance=0.5, InwardDistance=0)
-	pm.RegionsOfInterest[wall5mmPtvTSV].UpdateDerivedGeometry(Examination=examination)
+	pm.CreateRoi(Name=wall5mmPtvT, Color="Blue", Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[wall5mmPtvT].SetWallExpression(SourceRoiName=ptvT, OutwardDistance=0.5, InwardDistance=0)
+	pm.RegionsOfInterest[wall5mmPtvT].UpdateDerivedGeometry(Examination=examination)
 except Exception:
-	print 'Failed to create Wall;PTV-TSV+5mm. Continues ...'
+	print 'Failed to create Wall;PTV-T+5mm. Continues ...'
 #
-#------------- Suppression roi for low dose wash - Ext-(PTV-TSV+5mm)
+#------------- Suppression roi for low dose wash - Ext-(PTV-T+5mm)
 try :
-	pm.CreateRoi(Name=complementExt5mmPtvTsv, Color="Gray", Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[complementExt5mmPtvTsv].SetAlgebraExpression(
+	pm.CreateRoi(Name=complementExt5mmPtvT, Color="Gray", Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[complementExt5mmPtvT].SetAlgebraExpression(
 		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
+		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvT], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
 		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-	pm.RegionsOfInterest[complementExt5mmPtvTsv].UpdateDerivedGeometry(Examination=examination)
+	pm.RegionsOfInterest[complementExt5mmPtvT].UpdateDerivedGeometry(Examination=examination)
 except Exception:
-		print 'Failed to create Ext-(PTV-TSV+5mm). Continues...'
+		print 'Failed to create Ext-(PTV-T+5mm). Continues...'
 #
 # ------------- ANATOMY PREPARATION COMPLETE
 # --------- save the active plan
@@ -196,11 +199,13 @@ patient.Save()
 #CreateComplementExternalPtvE(patient.PatientModel,examination) #only for Type N+
 
 
-
+#
+# ------------- AUTO VMAT PLAN CREATION
+#
 
 # 5 - 7. Define unique plan, beamset and dosegrid
 #---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
-planName = 'ProstC_78_39'
+planName = 'ProstA_78_39'
 planName = UniquePlanName(planName, case)
 #
 beamSetPrimaryName = 'Arc1' #prepares a single CC arc VMAT for the primary field
@@ -226,10 +231,10 @@ LoadPlanAndBeamSet(case, plan, beamSetArc1)
 # 8. Create beam list
 with CompositeAction('Create arc beam'):
 	# ----- no need to add prescription for dynamic delivery
-	#beamSetArc1.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "AverageDose", DoseValue = defaultPrescDose, DoseVolume = 0, RelativePrescriptionLevel = 1)
+	beamSetArc1.AddDosePrescriptionToRoi(RoiName = ptvT, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
 	#
 	# ----- set the plan isocenter to the centre of the reference ROI
-	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSV].GetCenterOfRoi()
+	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvT].GetCenterOfRoi()
 	isodata = beamSetArc1.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	# ------ load single counterclockwise full arc
 	# deprecate - add 7 static IMRT fields around the ROI-based isocenter
@@ -243,20 +248,14 @@ with CompositeAction('Create arc beam'):
 	beamSetArc1.CreateArcBeam(Name='Arc1', Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
 #
 
-
 patient.Save()
-
 
 # 9. Set a predefined template manually
 plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.12,ParameterValue=7400,IsComparativeGoal='False',Priority=1)
 plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.20,ParameterValue=7000,IsComparativeGoal='False',Priority=2)
 plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=1.00,IsComparativeGoal='False',Priority=3)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=1.00,IsComparativeGoal='False',Priority=3)
 plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=0.98,IsComparativeGoal='False',Priority=4)
 plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtMost',GoalType='DoseAtVolume',AcceptanceLevel=8190,ParameterValue=0.01,IsComparativeGoal='False',Priority=4)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=0.98,IsComparativeGoal='False',Priority=5)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvSV,GoalCriteria='AtMost',GoalType='DoseAtVolume',AcceptanceLevel=8190,ParameterValue=0.01,IsComparativeGoal='False',Priority=5)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvTSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=0.98,IsComparativeGoal='False',Priority=6)
 plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=analCanal,GoalCriteria='AtMost',GoalType='AverageDose',AcceptanceLevel=3000,ParameterValue=0,IsComparativeGoal='False',Priority=7)
 plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.30,ParameterValue=7000,IsComparativeGoal='False',Priority=8)
 plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=5500,IsComparativeGoal='False',Priority=9)
@@ -268,8 +267,7 @@ plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCr
 #
 
 # 10. import optimization functions from a predefined template
-plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
-
+plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstA])
 
 # 11. set opt parameters and run first optimization for the VMAT plan
 optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
@@ -287,19 +285,117 @@ optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerD
 optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
 #
 
-
-# 12. Execute first run optimization
+# 12. Execute first run optimization with final dose (as set above in opt settings)
 plan.PlanOptimizations[0].RunOptimization()	
-
 
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
-
-# Save final
+# Save VMAT auto-plan result
 patient.Save()
 #
+
+
 #
+# ------------- AUTO IMRT FALLBACK PLAN CREATION
+#
+# 5 - 7. Define unique plan, beamset and dosegrid
+#---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
+planName = 'ProstA_78_39_fb'
+planName = UniquePlanName(planName, case)
+#
+beamSetPrimaryName = 'IMRT_Fallback' #prepares a standard 7-fld StepNShoot IMRT
+examinationName = examination.Name
+#
+# --------- Setup a standard IMRT protocol plan
+with CompositeAction('Adding plan with name {0} '.format(planName)):
+    # add plan
+    plan = case.AddNewPlan(PlanName=planName, Comment="7-fld SMLC prostate IMRT ", ExaminationName=examinationName)
+	# set standard dose grid size
+    plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
+	# set the dose grid size to cover
+    # add only one beam set
+    beamSetImrt = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName,
+		MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "SMLC",
+		PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractions, CreateSetupBeams = False)
+
+
+# Load the current plan and beamset into the system
+LoadPlanAndBeamSet(case, plan, beamSetImrt)
+
+
+# 8. Create beam list
+with CompositeAction('Create StepNShoot beams'):
+	# ----- no need to add prescription for dynamic delivery
+	beamSetImrt.AddDosePrescriptionToRoi(RoiName = ptvT, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
+	#
+	# ----- set the plan isocenter to the centre of the reference ROI
+	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvT].GetCenterOfRoi()
+	isodata = beamSetImrt.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	# add 7 static IMRT fields around the ROI-based isocenter
+	beamSetImrt.CreatePhotonBeam(Name = '1; T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = '2; T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = '3; T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = '4; T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, IsocenterData = isodata)
+	# ------ load single counterclockwise full arc
+	#beamSetArc1.CreateArcBeam(Name='Arc1', Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
+#
+
+patient.Save()
+
+# 9. Set a predefined template manually
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.12,ParameterValue=7400,IsComparativeGoal='False',Priority=1)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.20,ParameterValue=7000,IsComparativeGoal='False',Priority=2)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=1.00,IsComparativeGoal='False',Priority=3)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=0.98,IsComparativeGoal='False',Priority=4)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtMost',GoalType='DoseAtVolume',AcceptanceLevel=8190,ParameterValue=0.01,IsComparativeGoal='False',Priority=4)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=analCanal,GoalCriteria='AtMost',GoalType='AverageDose',AcceptanceLevel=3000,ParameterValue=0,IsComparativeGoal='False',Priority=7)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.30,ParameterValue=7000,IsComparativeGoal='False',Priority=8)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=5500,IsComparativeGoal='False',Priority=9)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=5000,IsComparativeGoal='False',Priority=9)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=external,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.01,ParameterValue=8190,IsComparativeGoal='False',Priority=10)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=penileBulb,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=4000,IsComparativeGoal='False',Priority=11)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadLeft,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=5000,IsComparativeGoal='False',Priority=12)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=5000,IsComparativeGoal='False',Priority=12)
+#
+
+# 10. import optimization functions from a predefined template
+plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstA])
+
+# 11. set opt parameters and run first optimization for the VMAT plan
+optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
+# - set the maximum limit on the number of iterations
+optimPara.Algorithm.MaxNumberOfIterations = 80
+# - set optimality tolerance level
+optimPara.Algorithm.OptimalityTolerance = 1E-08
+# - set to compute intermediate and final dose
+optimPara.DoseCalculation.ComputeFinalDose = 'True'
+optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
+# - set number of iterations in preparation phase
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
+# - constraint arc segmentation for machine deliverability
+#optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
+#optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
+# - constrain SMLC segmentation parameters for machine deliverability
+optimPara.SegmentConversion.MaxNumberOfSegments = 70
+optimPara.SegmentConversion.MinEquivalentSquare = 2
+optimPara.SegmentConversion.MinLeafEndSeparation = 0.5
+optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 2
+optimPara.SegmentConversion.MinSegmentArea = 4
+optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
+#
+
+# 12. Execute first run optimization with final dose (as set above in opt settings)
+plan.PlanOptimizations[0].RunOptimization()	
+
+# 13. compute final dose not necessary due to optimization setting
+#beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
+
+# Save IMRT auto-plan result
+patient.Save()
 #
 #
 #
