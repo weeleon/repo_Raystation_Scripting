@@ -309,7 +309,7 @@ with CompositeAction('Adding plan with name {0} '.format(planName)):
 
 
 # Load the current plan and beamset into the system
-LoadPlanAndBeamSet(case, plan, beamSetArc1)
+LoadPlanAndBeamSet(case, plan, beamSetImrt)
 
 
 # 8. Create beam list
