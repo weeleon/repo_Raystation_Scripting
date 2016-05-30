@@ -119,8 +119,25 @@ except Exception:
 
 # 4. Grow all required structures from the initial set
 # --------- EXTERNAL will be set using threshold contour generate at the user-defined intensity value
-pm.CreateRoi(Name=external, Color="Orange", Type="External", TissueName=None, RoiMaterial=None)
-pm.RegionsOfInterest[external].CreateExternalGeometry(Examination=examination, ThresholdLevel=externalContourThreshold)
+pm.CreateRoi(Name='temp_ext', Color="Orange", Type="External", TissueName=None, RoiMaterial=None)
+pm.RegionsOfInterest['temp_ext'].CreateExternalGeometry(Examination=examination, ThresholdLevel=externalContourThreshold)
+#
+#the above temporary external typically includes bit of sim couch therefore the true
+#External needs to be generated from the temp external
+pm.CreateRoi(Name=external, Color="Orange", Type="Organ", TissueName=None, RoiMaterial=None)
+pm.RegionsOfInterest[external].SetAlgebraExpression(
+		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': ['temp_ext'], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [pelvicCouchModel], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+pm.RegionsOfInterest[external].UpdateDerivedGeometry(Examination=examination)
+pm.RegionsOfInterest[external].SetAsExternal()
+#
+#then remove the temporary external
+pm.RegionsOfInterest['temp_ext'].DeleteRoi()
+#
+#and simplify straggly bits of the remaining true External
+rois.SimplifyContours(RoiNames=[external], RemoveHoles3D='False', RemoveSmallContours='True', AreaThreshold=10, ReduceMaxNumberOfPointsInContours='False', MaxNumberOfPoints=None, CreateCopyOfRoi='False')
+#
 #
 # --------- FEMORALS HEADS will be approximated using built-in MALE PELVIS Model Based Segmentation
 #get_current("ActionVisibility:Internal") # needed due to that MBS actions not visible in evaluation version.
@@ -215,7 +232,7 @@ LoadPlanAndBeamSet(case, plan, beamSetArc1)
 # 8. Create beam list
 with CompositeAction('Create arc beam'):
 	# ----- no need to add prescription for dynamic delivery
-	#beamSetArc1.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "AverageDose", DoseValue = defaultPrescDose, DoseVolume = 0, RelativePrescriptionLevel = 1)
+	beamSetArc1.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
 	#
 	# ----- set the plan isocenter to the centre of the reference ROI
 	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSV].GetCenterOfRoi()
@@ -315,7 +332,7 @@ LoadPlanAndBeamSet(case, plan, beamSetImrt)
 # 8. Create beam list
 with CompositeAction('Create StepNShoot beams'):
 	# ----- no need to add prescription for dynamic delivery
-	beamSetImrt.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = defaultPrescDose, RelativePrescriptionLevel = 1, AutoScaleDose='False')
+	beamSetImrt.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
 	#
 	# ----- set the plan isocenter to the centre of the reference ROI
 	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSV].GetCenterOfRoi()
