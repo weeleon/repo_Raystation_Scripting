@@ -74,8 +74,7 @@ for r in RequiredRois:
 
 #the script shall REGENERATE each of the following Rois each time
 #therefore if they already exist, delete first
-ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3,
-	marker4, marker5, marker6, ptvT, ptvSV, ptvTSV, wall5mmPtvTSV, complementExt5mmPtvTsv]
+ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6, ptvT, ptvSV, ptvTSV, wall5mmPtvTSV, complementExt5mmPtvTsv]
 #
 for sr in ScriptedRois:
 	try:
