@@ -454,9 +454,9 @@ plan = case.AddNewPlan(PlanName=planName, Comment="7-fld SMLC prostate IMRT ", E
 plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
 # set the dose grid size to cover
 # add first beam set
-beamSetImrt1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsPrimary, CreateSetupBeams = False)
+beamSetImrt1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "SMLC", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsPrimary, CreateSetupBeams = False)
 # add second beam set
-beamSetImrt2 = plan.AddNewBeamSet(Name = beamSetBoostName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsBoost, CreateSetupBeams = False)
+beamSetImrt2 = plan.AddNewBeamSet(Name = beamSetBoostName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "SMLC", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsBoost, CreateSetupBeams = False)
 #
 
 # Load the current plan and beamset into the system
