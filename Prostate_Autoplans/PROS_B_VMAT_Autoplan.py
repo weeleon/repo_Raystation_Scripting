@@ -74,8 +74,7 @@ for r in RequiredRois:
 
 #the script shall REGENERATE each of the following Rois each time
 #therefore if they already exist, delete first
-ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3,
-	marker4, marker5, marker6, ptvT, ptvSV, ptvTSV, wall5mmPtvTSV, complementExt5mmPtvTsv]
+ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6, ptvT, ptvSV, ptvTSV, wall5mmPtvTSV, complementExt5mmPtvTsv]
 #
 for sr in ScriptedRois:
 	try:
@@ -236,25 +235,19 @@ planName = 'ProstB_78_39'
 planName = UniquePlanName(planName, case)
 #
 beamSetPrimaryName = 'Arc_Primary' #prepares a single CC arc VMAT for the primary field
-beamSetBoostName = 'Arc_Boost' #prepares a single CC arc VMAT for the primary field
+beamSetBoostName = 'Arc_Boost'
 examinationName = examination.Name
 #
 # --------- Setup a standard VMAT protocol plan
-with CompositeAction('Adding plan with name {0} '.format(planName)):
-    # add plan
-    plan = case.AddNewPlan(PlanName=planName, Comment="2-arc 2-beamset prostate VMAT sequential boost", ExaminationName=examinationName)
-	# set standard dose grid size
-    plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
-	# set the dose grid size to cover
-    # add only one beam set
-    beamSetArc1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName,
-		MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT",
-		PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsPrimary, CreateSetupBeams = False)
-	#
-	beamSetArc2 = plan.AddNewBeamSet(Name = beamSetBoostName, ExaminationName = examinationName,
-		MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT",
-		PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsBoost, CreateSetupBeams = False)
-
+plan = case.AddNewPlan(PlanName=planName, Comment="2-arc 2-beamset prostate VMAT sequential boost", ExaminationName=examinationName)
+# set standard dose grid size
+plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
+# set the dose grid size to cover
+# add first beam set
+beamSetArc1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsPrimary, CreateSetupBeams = False)
+# add second beam set
+beamSetArc2 = plan.AddNewBeamSet(Name = beamSetBoostName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsBoost, CreateSetupBeams = False)
+#
 
 # Load the current plan and PRIMARY beamset into the system
 LoadPlanAndBeamSet(case, plan, beamSetArc1)
@@ -442,11 +435,6 @@ patient.Save()
 #
 
 
-
-
-
-
-
 #
 # ------------- AUTO IMRT FALLBACK PLAN CREATION
 #
@@ -455,42 +443,42 @@ patient.Save()
 planName = 'ProstB_78_39_fb'
 planName = UniquePlanName(planName, case)
 #
-beamSetPrimaryName = 'IMRT_Fallback' #prepares a standard 7-fld StepNShoot IMRT
+beamSetPrimaryName = 'IMRT_Primary' #prepares a standard 7-fld StepNShoot IMRT
+beamSetBoostName = 'IMRT_Boost' #prepares a standard 7-fld StepNShoot IMRT
 examinationName = examination.Name
 #
 # --------- Setup a standard IMRT protocol plan
-with CompositeAction('Adding plan with name {0} '.format(planName)):
-    # add plan
-    plan = case.AddNewPlan(PlanName=planName, Comment="7-fld SMLC prostate IMRT ", ExaminationName=examinationName)
-	# set standard dose grid size
-    plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
-	# set the dose grid size to cover
-    # add only one beam set
-    beamSetImrt = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName,
-		MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "SMLC",
-		PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractions, CreateSetupBeams = False)
-
+# add plan
+plan = case.AddNewPlan(PlanName=planName, Comment="7-fld SMLC prostate IMRT ", ExaminationName=examinationName)
+# set standard dose grid size
+plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
+# set the dose grid size to cover
+# add first beam set
+beamSetImrt1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsPrimary, CreateSetupBeams = False)
+# add second beam set
+beamSetImrt2 = plan.AddNewBeamSet(Name = beamSetBoostName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsBoost, CreateSetupBeams = False)
+#
 
 # Load the current plan and beamset into the system
-LoadPlanAndBeamSet(case, plan, beamSetImrt)
+LoadPlanAndBeamSet(case, plan, beamSetImrt1)
 
 
 # 8. Create beam list
 with CompositeAction('Create StepNShoot beams'):
 	# ----- no need to add prescription for dynamic delivery
-	beamSetImrt.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
+	beamSetImrt1.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = 4788, RelativePrescriptionLevel = 1, AutoScaleDose='False')
 	#
 	# ----- set the plan isocenter to the centre of the reference ROI
-	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSV].GetCenterOfRoi()
-	isodata = beamSetImrt.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvT].GetCenterOfRoi()
+	isodata = beamSetImrt1.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	# add 7 static IMRT fields around the ROI-based isocenter
-	beamSetImrt.CreatePhotonBeam(Name = '1; T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '2; T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '3; T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '4; T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, IsocenterData = isodata)
+	beamSetImrt1.CreatePhotonBeam(Name = '1; T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, IsocenterData = isodata)
+	beamSetImrt1.CreatePhotonBeam(Name = '2; T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, IsocenterData = isodata)
+	beamSetImrt1.CreatePhotonBeam(Name = '3; T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, IsocenterData = isodata)
+	beamSetImrt1.CreatePhotonBeam(Name = '4; T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, IsocenterData = isodata)
+	beamSetImrt1.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, IsocenterData = isodata)
+	beamSetImrt1.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, IsocenterData = isodata)
+	beamSetImrt1.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, IsocenterData = isodata)
 	# ------ load single counterclockwise full arc
 	#beamSetArc1.CreateArcBeam(Name='Arc1', Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
 #
@@ -498,27 +486,37 @@ with CompositeAction('Create StepNShoot beams'):
 patient.Save()
 
 # 9. Set a predefined template manually
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.12,ParameterValue=7400,IsComparativeGoal='False',Priority=1)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.20,ParameterValue=7000,IsComparativeGoal='False',Priority=2)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=1.00,IsComparativeGoal='False',Priority=3)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=1.00,IsComparativeGoal='False',Priority=3)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=0.98,IsComparativeGoal='False',Priority=4)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtMost',GoalType='DoseAtVolume',AcceptanceLevel=8190,ParameterValue=0.01,IsComparativeGoal='False',Priority=4)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=0.98,IsComparativeGoal='False',Priority=5)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvSV,GoalCriteria='AtMost',GoalType='DoseAtVolume',AcceptanceLevel=8190,ParameterValue=0.01,IsComparativeGoal='False',Priority=5)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvTSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=0.98,IsComparativeGoal='False',Priority=6)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=analCanal,GoalCriteria='AtMost',GoalType='AverageDose',AcceptanceLevel=3000,ParameterValue=0,IsComparativeGoal='False',Priority=7)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.30,ParameterValue=7000,IsComparativeGoal='False',Priority=8)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=5500,IsComparativeGoal='False',Priority=9)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=5000,IsComparativeGoal='False',Priority=9)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=external,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.01,ParameterValue=8190,IsComparativeGoal='False',Priority=10)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=penileBulb,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=4000,IsComparativeGoal='False',Priority=11)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadLeft,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=5000,IsComparativeGoal='False',Priority=12)
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=5000,IsComparativeGoal='False',Priority=12)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=4750,ParameterValue=1.00,IsComparativeGoal='False',Priority=11)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=4750,ParameterValue=1.00,IsComparativeGoal='False',Priority=11)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=4750,ParameterValue=0.98,IsComparativeGoal='False',Priority=12)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=4750,ParameterValue=0.98,IsComparativeGoal='False',Priority=12)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvTSV,GoalCriteria='AtMost',GoalType='DoseAtVolume',AcceptanceLevel=5250,ParameterValue=0.01,IsComparativeGoal='False',Priority=12)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.12,ParameterValue=4800,IsComparativeGoal='False',Priority=13)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.20,ParameterValue=4400,IsComparativeGoal='False',Priority=13)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=external,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.01,ParameterValue=5250,IsComparativeGoal='False',Priority=14)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=analCanal,GoalCriteria='AtMost',GoalType='AverageDose',AcceptanceLevel=1920,ParameterValue=0,IsComparativeGoal='False',Priority=14)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.30,ParameterValue=4800,IsComparativeGoal='False',Priority=15)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=3200,IsComparativeGoal='False',Priority=17)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=2600,IsComparativeGoal='False',Priority=17)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=penileBulb,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=2500,IsComparativeGoal='False',Priority=19)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadLeft,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=3200,IsComparativeGoal='False',Priority=19)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=3200,IsComparativeGoal='False',Priority=19)
 #
 
+# --- extra safety check for multi-beamset plans
+# --- confirm that the plan optimization path matches the beamset intended
+try:
+	checkBSet = plan.PlanOptimizations[0].OptimizedBeamSets[beamSetPrimaryName].DicomPlanLabel
+	if checkBSet != beamSetPrimaryName :
+		raise Exception('The beamset name for the primary beamset does not appear to match.')
+except Exception :
+		raise Exception('The primary beamset does not appear to exist.')
+#if we get to this line, it confirms that plan.PlanOptimizations[0] is correct for primary
+
+
 # 10. import optimization functions from a predefined template
-plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
+plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstBPr])
+
 
 # 11. set opt parameters and run first optimization for the VMAT plan
 optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
@@ -548,6 +546,115 @@ plan.PlanOptimizations[0].RunOptimization()
 
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
+
+# Save IMRT auto-plan result
+patient.Save()
+
+# Load the plan and boost beamset into the system
+LoadPlanAndBeamSet(case, plan, beamSetImrt2)
+
+
+# 8. Create beam list for boost
+with CompositeAction('Create StepNShoot beams'):
+	# ----- no need to add prescription for dynamic delivery
+	beamSetImrt2.AddDosePrescriptionToRoi(RoiName = ptvT, PrescriptionType = "NearMinimumDose", DoseValue = 2660, RelativePrescriptionLevel = 1, AutoScaleDose='False')
+	#
+	# ----- set the plan isocenter to the centre of the reference ROI
+	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvT].GetCenterOfRoi()
+	isodata = beamSetImrt2.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
+	# add 7 static IMRT fields around the ROI-based isocenter
+	beamSetImrt2.CreatePhotonBeam(Name = '8; T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, IsocenterData = isodata)
+	beamSetImrt2.CreatePhotonBeam(Name = '9; T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, IsocenterData = isodata)
+	beamSetImrt2.CreatePhotonBeam(Name = '10; T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, IsocenterData = isodata)
+	beamSetImrt2.CreatePhotonBeam(Name = '11; T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, IsocenterData = isodata)
+	beamSetImrt2.CreatePhotonBeam(Name = '12; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, IsocenterData = isodata)
+	beamSetImrt2.CreatePhotonBeam(Name = '13; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, IsocenterData = isodata)
+	beamSetImrt2.CreatePhotonBeam(Name = '14; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, IsocenterData = isodata)
+	# ------ load single counterclockwise full arc
+	#beamSetArc1.CreateArcBeam(Name='Arc1', Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
+#
+
+patient.Save()
+
+# 9. Set a predefined template manually
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=2660,ParameterValue=1.00,IsComparativeGoal='False',Priority=21)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=2660,ParameterValue=0.98,IsComparativeGoal='False',Priority=22)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtMost',GoalType='DoseAtVolume',AcceptanceLevel=2940,ParameterValue=0.01,IsComparativeGoal='False',Priority=22)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.12,ParameterValue=2200,IsComparativeGoal='False',Priority=23)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.20,ParameterValue=1800,IsComparativeGoal='False',Priority=23)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=external,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.01,ParameterValue=2940,IsComparativeGoal='False',Priority=24)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=analCanal,GoalCriteria='AtMost',GoalType='AverageDose',AcceptanceLevel=1080,ParameterValue=0,IsComparativeGoal='False',Priority=24)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.30,ParameterValue=2000,IsComparativeGoal='False',Priority=25)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=1800,IsComparativeGoal='False',Priority=27)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=1400,IsComparativeGoal='False',Priority=27)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=penileBulb,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=1500,IsComparativeGoal='False',Priority=29)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadLeft,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=1800,IsComparativeGoal='False',Priority=29)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=1800,IsComparativeGoal='False',Priority=29)
+#
+
+
+# --- extra safety check for multi-beamset plans
+# --- confirm that the plan optimization path matches the beamset intended
+try:
+	checkBSet = plan.PlanOptimizations[1].OptimizedBeamSets[beamSetBoostName].DicomPlanLabel
+	if checkBSet != beamSetBoostName :
+		raise Exception('The beamset name for the boost beamset does not appear to match.')
+except Exception :
+		raise Exception('The boost beamset does not appear to exist.')
+#if we get to this line, it confirms that plan.PlanOptimizations[1] is correct for boost
+
+
+# 10. import optimization functions from a predefined template
+plan.PlanOptimizations[1].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstBBo])
+
+
+# 11. set opt parameters and run first optimization for the VMAT plan
+optimPara = plan.PlanOptimizations[1].OptimizationParameters #shorter handle
+# - set the maximum limit on the number of iterations
+optimPara.Algorithm.MaxNumberOfIterations = 80
+# - set optimality tolerance level
+optimPara.Algorithm.OptimalityTolerance = 1E-08
+# - set to compute intermediate and final dose
+optimPara.DoseCalculation.ComputeFinalDose = 'True'
+optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
+# - set number of iterations in preparation phase
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
+# - constraint arc segmentation for machine deliverability
+#optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
+#optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
+# - constrain SMLC segmentation parameters for machine deliverability
+optimPara.SegmentConversion.MaxNumberOfSegments = 70
+optimPara.SegmentConversion.MinEquivalentSquare = 2
+optimPara.SegmentConversion.MinLeafEndSeparation = 0.5
+optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 2
+optimPara.SegmentConversion.MinSegmentArea = 4
+optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
+#
+
+# 12. Execute first run optimization with final dose (as set above in opt settings)
+plan.PlanOptimizations[1].RunOptimization()	
+
+# 13. compute final dose not necessary due to optimization setting
+#beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
+
+
+#Last step needed for sum plan assessment, load the master evaluation template
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.12,ParameterValue=7400,IsComparativeGoal='False',Priority=1)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.20,ParameterValue=7000,IsComparativeGoal='False',Priority=1)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=1.00,IsComparativeGoal='False',Priority=2)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ctvSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=4750,ParameterValue=1.00,IsComparativeGoal='False',Priority=2)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=7410,ParameterValue=0.98,IsComparativeGoal='False',Priority=3)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvSV,GoalCriteria='AtLeast',GoalType='DoseAtVolume',AcceptanceLevel=4750,ParameterValue=0.98,IsComparativeGoal='False',Priority=3)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=ptvT,GoalCriteria='AtMost',GoalType='DoseAtVolume',AcceptanceLevel=8190,ParameterValue=0.01,IsComparativeGoal='False',Priority=4)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=external,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.01,ParameterValue=8190,IsComparativeGoal='False',Priority=5)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=analCanal,GoalCriteria='AtMost',GoalType='AverageDose',AcceptanceLevel=3000,ParameterValue=0,IsComparativeGoal='False',Priority=5)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.30,ParameterValue=7000,IsComparativeGoal='False',Priority=6)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=bladder,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=5500,IsComparativeGoal='False',Priority=7)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=rectum,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=5000,IsComparativeGoal='False',Priority=7)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=penileBulb,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.50,ParameterValue=4000,IsComparativeGoal='False',Priority=8)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadLeft,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=5000,IsComparativeGoal='False',Priority=9)
+plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=5000,IsComparativeGoal='False',Priority=9)
+#
 
 # Save IMRT auto-plan result
 patient.Save()
