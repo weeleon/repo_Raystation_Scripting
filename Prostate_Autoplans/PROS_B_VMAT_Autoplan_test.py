@@ -235,25 +235,19 @@ planName = 'ProstB_78_39'
 planName = UniquePlanName(planName, case)
 #
 beamSetPrimaryName = 'Arc_Primary' #prepares a single CC arc VMAT for the primary field
-beamSetBoostName = 'Arc_Boost' #prepares a single CC arc VMAT for the primary field
+beamSetBoostName = 'Arc_Boost'
 examinationName = examination.Name
 #
 # --------- Setup a standard VMAT protocol plan
-with CompositeAction('Adding plan with name {0} '.format(planName)):
-    # add plan
-    plan = case.AddNewPlan(PlanName=planName, Comment="2-arc 2-beamset prostate VMAT sequential boost", ExaminationName=examinationName)
-	# set standard dose grid size
-    plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
-	# set the dose grid size to cover
-    # add only one beam set
-    beamSetArc1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName,
-		MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT",
-		PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsPrimary, CreateSetupBeams = False)
-	#
-	beamSetArc2 = plan.AddNewBeamSet(Name = beamSetBoostName, ExaminationName = examinationName,
-		MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT",
-		PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsBoost, CreateSetupBeams = False)
-
+plan = case.AddNewPlan(PlanName=planName, Comment="2-arc 2-beamset prostate VMAT sequential boost", ExaminationName=examinationName)
+# set standard dose grid size
+plan.SetDefaultDoseGrid(VoxelSize={'x':defaultDoseGrid, 'y':defaultDoseGrid, 'z':defaultDoseGrid})
+# set the dose grid size to cover
+# add first beam set
+beamSetArc1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsPrimary, CreateSetupBeams = False)
+# add second beam set
+beamSetArc2 = plan.AddNewBeamSet(Name = beamSetBoostName, ExaminationName = examinationName, MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT", PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractionsPrimary, CreateSetupBeams = False)
+#
 
 # Load the current plan and PRIMARY beamset into the system
 LoadPlanAndBeamSet(case, plan, beamSetArc1)
