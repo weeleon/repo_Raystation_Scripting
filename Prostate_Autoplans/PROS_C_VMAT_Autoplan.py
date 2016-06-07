@@ -158,7 +158,7 @@ CreateUnionPtvTSV(pm,examination) #all prostate types except Type A
 #
 # ----------- Conformity structure - Wall; PTV-TSV+5mm
 try:
-	pm.CreateRoi(Name=wall5mmPtvTSV, Color="Blue", Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.CreateRoi(Name=wall5mmPtvTSV, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
 	pm.RegionsOfInterest[wall5mmPtvTSV].SetWallExpression(SourceRoiName=ptvTSV, OutwardDistance=0.5, InwardDistance=0)
 	pm.RegionsOfInterest[wall5mmPtvTSV].UpdateDerivedGeometry(Examination=examination)
 except Exception:
@@ -166,7 +166,7 @@ except Exception:
 #
 #------------- Suppression roi for low dose wash - Ext-(PTV-TSV+5mm)
 try :
-	pm.CreateRoi(Name=complementExt5mmPtvTsv, Color="Gray", Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.CreateRoi(Name=complementExt5mmPtvTsv, Color=colourComplementExternal, Type="Avoidance", TissueName=None, RoiMaterial=None)
 	pm.RegionsOfInterest[complementExt5mmPtvTsv].SetAlgebraExpression(
 		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
 		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
