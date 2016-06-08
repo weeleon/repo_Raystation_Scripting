@@ -272,14 +272,14 @@ plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.Template
 # 11. set opt parameters and run first optimization for the VMAT plan
 optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
 # - set the maximum limit on the number of iterations
-optimPara.Algorithm.MaxNumberOfIterations = 80
+optimPara.Algorithm.MaxNumberOfIterations = 40
 # - set optimality tolerance level
-optimPara.Algorithm.OptimalityTolerance = 1E-08
+optimPara.Algorithm.OptimalityTolerance = 1E-05
 # - set to compute intermediate and final dose
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
 # - set number of iterations in preparation phase
-optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 10
 # - constraint arc segmentation for machine deliverability
 optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
@@ -365,17 +365,17 @@ plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCr
 # 10. import optimization functions from a predefined template
 plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstA])
 
-# 11. set opt parameters and run first optimization for the VMAT plan
+# 11. set opt parameters and run first optimization for the IMRT plan
 optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
 # - set the maximum limit on the number of iterations
-optimPara.Algorithm.MaxNumberOfIterations = 80
+optimPara.Algorithm.MaxNumberOfIterations = 40
 # - set optimality tolerance level
-optimPara.Algorithm.OptimalityTolerance = 1E-08
+optimPara.Algorithm.OptimalityTolerance = 1E-05
 # - set to compute intermediate and final dose
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
 # - set number of iterations in preparation phase
-optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 10
 # - constraint arc segmentation for machine deliverability
 #optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 #optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
@@ -383,7 +383,7 @@ optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
 optimPara.SegmentConversion.MaxNumberOfSegments = 70
 optimPara.SegmentConversion.MinEquivalentSquare = 2
 optimPara.SegmentConversion.MinLeafEndSeparation = 0.5
-optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 2
+optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 4
 optimPara.SegmentConversion.MinSegmentArea = 4
 optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
 #

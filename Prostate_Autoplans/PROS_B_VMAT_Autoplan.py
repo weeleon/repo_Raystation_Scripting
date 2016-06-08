@@ -310,14 +310,14 @@ plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.Template
 # 11. set opt parameters and run first optimization for the VMAT plan
 optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
 # - set the maximum limit on the number of iterations
-optimPara.Algorithm.MaxNumberOfIterations = 80
+optimPara.Algorithm.MaxNumberOfIterations = 40
 # - set optimality tolerance level
-optimPara.Algorithm.OptimalityTolerance = 1E-08
+optimPara.Algorithm.OptimalityTolerance = 1E-05
 # - set to compute intermediate and final dose
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
 # - set number of iterations in preparation phase
-optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 10
 # - constraint arc segmentation for machine deliverability
 optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
@@ -391,9 +391,9 @@ plan.PlanOptimizations[1].ApplyOptimizationTemplate(Template=patient_db.Template
 # 11. set opt parameters and run first optimization for the VMAT plan
 optimPara = plan.PlanOptimizations[1].OptimizationParameters #shorter handle
 # - set the maximum limit on the number of iterations
-optimPara.Algorithm.MaxNumberOfIterations = 80
+optimPara.Algorithm.MaxNumberOfIterations = 40
 # - set optimality tolerance level
-optimPara.Algorithm.OptimalityTolerance = 1E-08
+optimPara.Algorithm.OptimalityTolerance = 1E-05
 # - set to compute intermediate and final dose
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
@@ -518,17 +518,17 @@ except Exception :
 plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstBPr])
 
 
-# 11. set opt parameters and run first optimization for the VMAT plan
+# 11. set opt parameters and run first optimization for the IMRT plan
 optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
 # - set the maximum limit on the number of iterations
-optimPara.Algorithm.MaxNumberOfIterations = 80
+optimPara.Algorithm.MaxNumberOfIterations = 40
 # - set optimality tolerance level
-optimPara.Algorithm.OptimalityTolerance = 1E-08
+optimPara.Algorithm.OptimalityTolerance = 1E-05
 # - set to compute intermediate and final dose
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
 # - set number of iterations in preparation phase
-optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 10
 # - constraint arc segmentation for machine deliverability
 #optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 #optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
@@ -536,10 +536,10 @@ optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
 optimPara.SegmentConversion.MaxNumberOfSegments = 70
 optimPara.SegmentConversion.MinEquivalentSquare = 2
 optimPara.SegmentConversion.MinLeafEndSeparation = 0.5
-optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 2
+optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 4
 optimPara.SegmentConversion.MinSegmentArea = 4
 optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
-#
+
 
 # 12. Execute first run optimization with final dose (as set above in opt settings)
 plan.PlanOptimizations[0].RunOptimization()	
@@ -608,17 +608,17 @@ except Exception :
 plan.PlanOptimizations[1].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstBBo])
 
 
-# 11. set opt parameters and run first optimization for the VMAT plan
+# 11. set opt parameters and run first optimization for the IMRT plan
 optimPara = plan.PlanOptimizations[1].OptimizationParameters #shorter handle
 # - set the maximum limit on the number of iterations
-optimPara.Algorithm.MaxNumberOfIterations = 80
+optimPara.Algorithm.MaxNumberOfIterations = 40
 # - set optimality tolerance level
-optimPara.Algorithm.OptimalityTolerance = 1E-08
+optimPara.Algorithm.OptimalityTolerance = 1E-05
 # - set to compute intermediate and final dose
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
 # - set number of iterations in preparation phase
-optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 10
 # - constraint arc segmentation for machine deliverability
 #optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 #optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
@@ -626,10 +626,10 @@ optimPara.DoseCalculation.IterationsInPreparationsPhase = 20
 optimPara.SegmentConversion.MaxNumberOfSegments = 70
 optimPara.SegmentConversion.MinEquivalentSquare = 2
 optimPara.SegmentConversion.MinLeafEndSeparation = 0.5
-optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 2
+optimPara.SegmentConversion.MinNumberOfOpenLeafPairs = 4
 optimPara.SegmentConversion.MinSegmentArea = 4
 optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
-#
+
 
 # 12. Execute first run optimization with final dose (as set above in opt settings)
 plan.PlanOptimizations[1].RunOptimization()	
