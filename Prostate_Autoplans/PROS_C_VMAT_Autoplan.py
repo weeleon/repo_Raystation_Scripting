@@ -35,7 +35,7 @@ RequiredRois = [ctvT, ctvSV, rectum, bladder, analCanal, penileBulb, testes, pel
 #therefore if they already exist, delete first
 ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6, ptvT, ptvSV, ptvTSV, wall5mmPtvTSV, complementExt5mmPtvTSV]
 #the following structures are excluded from DICOM export to the linear acc to help the nurses
-ExcludedRois = [pelvicCouchModel, pelvicCouchExtras, wall5mmPtvTSV, complementExt5mmPtvTSV]
+ExcludedRois = [wall5mmPtvTSV, complementExt5mmPtvTSV]
 
 
 #---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
@@ -278,7 +278,7 @@ patient.Save()
 #
 
 # 9. Set a predefined template directly from the clinical database for v.5.0.2
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
+plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
 
 # 10. import optimization functions from a predefined template
 plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
@@ -381,7 +381,7 @@ patient.Save()
 #
 
 # 9. Set a predefined template directly from the clinical database for v.5.0.2
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
+plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
 
 # 10. import optimization functions from a predefined template
 plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
