@@ -1,6 +1,6 @@
 
 # DEFINE THE CT DENSITY TABLE NAME
-densityConversionTable = 'Siemens120kVpCT'
+densityConversionTable = 'CTAWP65673:120kV'
 oncentraConversionTable = 'OEB CT Table'
 
 
@@ -28,6 +28,7 @@ fiducial5 = 'S5' #may or may not exist for any prostate plan
 fiducial6 = 'S6' #may or may not exist for any prostate plan
 external = 'External'
 pelvicCouchModel = 'ContesseCouch-Pelvine'
+pelvicCouchExtras = 'struts'
 
 
 # DEFINE A STANDARD SET OF ANATOMICAL STRUCTURE NAMES
@@ -89,16 +90,17 @@ complementBowelPtvE = 'OR; Tarm-(PTV-E+5mm)'
 
 wall5mmPtvT = 'Wall; PTV-T+5mm'
 wall5mmPtvTSV = 'Wall; PTV-TSV+5mm'
-wall5mmPtvE = 'Wall; PTV-E+5mm'
+wall8mmPtvTSV = 'Wall; PTV-TSV+8mm'
 wall10mmPtvTSV = 'Wall; PTV-TSV+10mm'
+wall5mmPtvE = 'Wall; PTV-E+5mm'
 wall10mmPtvE = 'Wall; PTV-E+10mm'
 
 transitionTSVtoE = 'PTV-E-(PTV-TSV+8mm)'
 
 complementExt5mmPtvT = 'Ext-(PTV-T+5mm)'
-complementExt5mmPtvTsv = 'Ext-(PTV-TSV+5mm)'
+complementExt5mmPtvTSV = 'Ext-(PTV-TSV+5mm)'
 complementExt5mmPtvE = 'Ext-(PTV-E+5mm)'
-complementExt10mmPtvTsv = 'Ext-(PTV-TSV+10mm)'
+complementExt10mmPtvTSV = 'Ext-(PTV-TSV+10mm)'
 complementExt10mmPtvE = 'Ext-(PTV-E+10mm)'
 
 
@@ -293,7 +295,7 @@ def CreateMarginPtvSV(pm,exam):
 		pm.RegionsOfInterest[ptvSV].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to create PTV-SV. Continues...'
-#procedure CreateMarginPtvTSV ends
+#procedure CreateMarginPtvSV ends
 
 def CreateMarginPtvE(pm,exam):
 # 3) create PTV-E 
@@ -497,3 +499,24 @@ def LoadPlanAndBeamSet(patient, plan, beamset):
   # end LoadPlanAndBeamSet
 
 
+
+
+#CreateComplementBladderPtvT(patient.PatientModel,examination) #all prostate types
+#CreateComplementRectumPtvT(patient.PatientModel,examination) #all prostate types
+#CreateWallPtvT(patient.PatientModel,examination) #all prostate types
+#CreateComplementExternalPtvT(patient.PatientModel,examination) #all prostate types
+
+#CreateComplementBladderPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
+#CreateComplementRectumPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
+#CreateWallPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
+#CreateComplementExternalPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
+
+#CreateMarginPtvE(patient.PatientModel,examination) #only for Type N+
+#CreateTransitionPtvTsvPtvE(patient.PatientModel,examination) #only for Type N+
+#CreateComplementPtvTsvPtvE(patient.PatientModel,examination) #only for Type N+
+#CreateComplementBladderPtvE(patient.PatientModel,examination) #only for Type N+
+#CreateComplementRectumPtvE(patient.PatientModel,examination) #only for Type N+
+#CreateComplementBowelPtvTSV(patient.PatientModel,examination) #only for Type N+
+#CreateComplementBowelPtvE(patient.PatientModel,examination) #only for Type N+
+#CreateWallPtvE(patient.PatientModel,examination) #only for Type N+
+#CreateComplementExternalPtvE(patient.PatientModel,examination) #only for Type N+

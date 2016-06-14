@@ -18,9 +18,11 @@ patient = get_current('Patient')
 examination = get_current('Examination')
 case = get_current('Case')
 
-#### PROSTATE TYPE C (Locally adv PCa with SV involvement) AUTO-PLAN
+#### PROSTATE TYPE N (Adv PCa with Nodal involvement) AUTO-PLAN
 #### 78Gy/39F Normo-fractionated prescribed to PTV-T and PTV-SV
-#### As a VMAT 1 arc solution
+#### With simultaneous integrated boost of 56Gy/39F to PTV-E
+#### (Reference dose level remains 78Gy)
+#### As a VMAT dual-arc solution
 #### With a 7-field IMRT beam as a fall-back plan
 
 defaultPrescDose = 7800 #the absolute prescribed dose in cGy
@@ -30,16 +32,20 @@ defaultFractions = 39 #standard number of fractions
 pm = case.PatientModel
 rois = pm.StructureSets[examination.Name]
 # --- the plan shall NOT be made without the following required Rois
-RequiredRois = [ctvT, ctvSV, rectum, bladder, analCanal, penileBulb, testes, pelvicCouchModel]
+RequiredRois = [ctvT, ctvSV, ctvE, rectum, bladder, bowel, analCanal, penileBulb, testes, pelvicCouchModel]
 # --- the script shall REGENERATE each of the following Rois each time
 #therefore if they already exist, delete first
-ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6, ptvT, ptvSV, ptvTSV, wall5mmPtvTSV, complementExt5mmPtvTSV]
-#the following structures are excluded from DICOM export to the linear acc to help the nurses
-ExcludedRois = [pelvicCouchModel, pelvicCouchExtras, wall5mmPtvTSV, complementExt5mmPtvTSV]
+ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect,
+	marker1, marker2, marker3, marker4, marker5, marker6,
+	ptvT, ptvSV, ptvTSV, ptvE, transitionTSVtoE,
+	wall8mmPtvTSV, wall5mmPtvE, complementExt5mmPtvE]
+# note - the wall structure around PTV-E needs to also wrap 10mm around the PTV-TSV
+# and clip the wall to 5mm from the skin surface
+# the complement structures also include the bowel, bladder and rectum 5mm away from PTV-E
 
 
 #---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
-planName = 'ProstC_78_39'
+planName = 'ProstN_78_39'
 planName = UniquePlanName(planName, case)
 #
 beamSetPrimaryName = 'Arc1' #prepares a single CC arc VMAT for the primary field
@@ -160,6 +166,10 @@ CreateWallHvRectum(pm,examination)
 CreateMarginPtvT(pm,examination)
 CreateMarginPtvSV(pm,examination)
 CreateUnionPtvTSV(pm,examination)
+CreateMarginPtvE(pm,examination)
+CreateTransitionPtvTsvPtvE(pm,examination)
+# ---------- GROW additional avoidance structures
+
 #
 # ----------- Conformity structure - Wall; PTV-TSV+5mm
 try:
@@ -180,12 +190,6 @@ try :
 except Exception:
 		print 'Failed to create Ext-(PTV-TSV+5mm). Continues...'
 #
-#-------------- Exclude help rois used only for planning and optimization from dicom export
-for e in ExcludedRois:
-	try :
-		rois.RoiGeometries[e].OfRoi.ExcludeFromExport = 'True'
-	except Exception :
-		raise Exception('Please check structure set : '+e+' cannot be excluded from DCM export.')
 # ------------- ANATOMY PREPARATION COMPLETE
 # --------- save the active plan
 patient.Save()

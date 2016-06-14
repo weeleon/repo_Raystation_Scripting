@@ -7,18 +7,6 @@ from System.Windows import *
 
 from PROS_Alle_Definitions import *
 
-#### PROSTATE TYPE A AUTO-PLAN
-#### 78Gy/39F Normo-fractionated prescribed to PTV-T only
-#### As a VMAT 1 arc solution
-#### With a 7-field IMRT beam as a fall-back plan
-
-defaultPrescDose = 7800 #the absolute prescribed dose in cGy
-defaultFractions = 39 #standard number of fractions
-
-# NOTE A TEMPLATE BEAMSET IS NOT DEFINED THROUGH A FUNCTION CALL TO APPLY A TEMPLATE
-# but rather each field in the beamset has been explicitly defined using
-# the 'CreatePhotonBeam' method acting on a BeamSet instance - see lines in script
-
 # Define null filter
 filter = {}
 
@@ -30,6 +18,36 @@ patient = get_current('Patient')
 examination = get_current('Examination')
 case = get_current('Case')
 
+#### PROSTATE TYPE A (Locally adv PCa with no SV involvement) AUTO-PLAN
+#### 78Gy/39F Normo-fractionated prescribed to PTV-T only
+#### As a VMAT 1 arc solution
+#### With a 7-field IMRT beam as a fall-back plan
+
+defaultPrescDose = 7800 #the absolute prescribed dose in cGy
+defaultFractions = 39 #standard number of fractions
+
+# -------- Define composite handle for PATIENT ANATOMY MODELLING
+pm = case.PatientModel
+rois = pm.StructureSets[examination.Name]
+# --- the plan shall NOT be made without the following required Rois
+RequiredRois = [ctvT, rectum, bladder, analCanal, penileBulb, testes, pelvicCouchModel]
+# --- the script shall REGENERATE each of the following Rois each time
+#therefore if they already exist, delete first
+ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6, ptvT, wall5mmPtvT, complementExt5mmPtvT]
+#the following structures are excluded from DICOM export to the linear acc to help the nurses
+ExcludedRois = [pelvicCouchModel, pelvicCouchExtras, wall5mmPtvT, complementExt5mmPtvT]
+
+
+#---------- auto-generate a unique plan name if the given planname already exists
+planName = 'ProstA_78_39'
+planName = UniquePlanName(planName, case)
+#
+beamSetPrimaryName = 'Arc1' #prepares a single CC arc VMAT for the primary field
+beamArcPrimaryName = '1'
+examinationName = examination.Name
+#
+#
+#
 # Define the workflow for the autoplan step
 # 1. Confirm that all mandatory structures exist and have non-zero volumes
 # 2. Assign correct CT to Density Table
@@ -48,12 +66,6 @@ case = get_current('Case')
 
 
 # 1. Check structure set
-# -------- Define composite handle for PATIENT ANATOMY MODELLING
-pm = case.PatientModel
-rois = pm.StructureSets[examination.Name]
-#
-#the plan shall NOT be made without the following required Rois
-RequiredRois = [ctvT, rectum, bladder, analCanal, penileBulb, testes, pelvicCouchModel]
 #
 # - confirm that the required rois for autoplanning have been drawn
 minVolume = 1 #at least 1cc otherwise the ROI does not make sense or might be empty
@@ -64,12 +76,6 @@ for r in RequiredRois:
 			raise Exception('The volume of '+r+' seems smaller than required ('+minVolume+'cc).')
 	except Exception :
 		raise Exception('Please check structure set : '+r+' appears to be missing.')
-
-
-#the script shall REGENERATE each of the following Rois each time
-#therefore if they already exist, delete first
-ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3,
-	marker4, marker5, marker6, ptvT, wall5mmPtvT, complementExt5mmPtvT]
 #
 for sr in ScriptedRois:
 	try:
@@ -139,8 +145,7 @@ pm.RegionsOfInterest['temp_ext'].DeleteRoi()
 #and simplify straggly bits of the remaining true External
 rois.SimplifyContours(RoiNames=[external], RemoveHoles3D='False', RemoveSmallContours='True', AreaThreshold=10, ReduceMaxNumberOfPointsInContours='False', MaxNumberOfPoints=None, CreateCopyOfRoi='False')
 #
-#
-# --------- FEMORALS HEADS will be approximated using built-in MALE PELVIS Model Based Segmentation
+# FEMORALS HEADS will be approximated using built-in MALE PELVIS Model Based Segmentation
 #get_current("ActionVisibility:Internal") # needed due to that MBS actions not visible in evaluation version.
 pm.MBSAutoInitializer(MbsRois=[
 	{ 'CaseType': "PelvicMale", 'ModelName': "FemoralHead (Left)", 'RoiName': femHeadLeft, 'RoiColor': colourCaputFemori }, 
@@ -152,12 +157,12 @@ pm.AdaptMbsMeshes(Examination=examination, RoiNames=[femHeadLeft, femHeadRight],
 CreateWallHvRectum(pm,examination)
 #
 # ---------- GROW ALL PTVs
-CreateMarginPtvT(pm,examination) #all prostate types
+CreateMarginPtvT(pm,examination)
 #
 # ----------- Conformity structure - Wall; PTV-T+5mm
 try:
 	pm.CreateRoi(Name=wall5mmPtvT, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[wall5mmPtvT].SetWallExpression(SourceRoiName=ptvT, OutwardDistance=0.5, InwardDistance=0)
+	pm.RegionsOfInterest[wall5mmPtvT].SetWallExpression(SourceRoiName=ptvTSV, OutwardDistance=0.5, InwardDistance=0)
 	pm.RegionsOfInterest[wall5mmPtvT].UpdateDerivedGeometry(Examination=examination)
 except Exception:
 	print 'Failed to create Wall;PTV-T+5mm. Continues ...'
@@ -173,44 +178,21 @@ try :
 except Exception:
 		print 'Failed to create Ext-(PTV-T+5mm). Continues...'
 #
+#-------------- Exclude help rois used only for planning and optimization from dicom export
+for e in ExcludedRois:
+	try :
+		rois.RoiGeometries[e].OfRoi.ExcludeFromExport = 'True'
+	except Exception :
+		raise Exception('Please check structure set : '+e+' cannot be excluded from DCM export.')
 # ------------- ANATOMY PREPARATION COMPLETE
 # --------- save the active plan
 patient.Save()
 
 
-#CreateComplementBladderPtvT(patient.PatientModel,examination) #all prostate types
-#CreateComplementRectumPtvT(patient.PatientModel,examination) #all prostate types
-#CreateWallPtvT(patient.PatientModel,examination) #all prostate types
-#CreateComplementExternalPtvT(patient.PatientModel,examination) #all prostate types
-
-#CreateComplementBladderPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
-#CreateComplementRectumPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
-#CreateWallPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
-#CreateComplementExternalPtvTSV(patient.PatientModel,examination) #all prostate types except Type A
-
-#CreateMarginPtvE(patient.PatientModel,examination) #only for Type N+
-#CreateTransitionPtvTsvPtvE(patient.PatientModel,examination) #only for Type N+
-#CreateComplementPtvTsvPtvE(patient.PatientModel,examination) #only for Type N+
-#CreateComplementBladderPtvE(patient.PatientModel,examination) #only for Type N+
-#CreateComplementRectumPtvE(patient.PatientModel,examination) #only for Type N+
-#CreateComplementBowelPtvTSV(patient.PatientModel,examination) #only for Type N+
-#CreateComplementBowelPtvE(patient.PatientModel,examination) #only for Type N+
-#CreateWallPtvE(patient.PatientModel,examination) #only for Type N+
-#CreateComplementExternalPtvE(patient.PatientModel,examination) #only for Type N+
-
-
 #
 # ------------- AUTO VMAT PLAN CREATION
 #
-
-# 5 - 7. Define unique plan, beamset and dosegrid
-#---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
-planName = 'ProstA_78_39'
-planName = UniquePlanName(planName, case)
-#
-beamSetPrimaryName = 'Arc1' #prepares a single CC arc VMAT for the primary field
-examinationName = examination.Name
-#
+# 5 - 7. Defining unique plan, beamset and dosegrid
 # --------- Setup a standard VMAT protocol plan
 with CompositeAction('Adding plan with name {0} '.format(planName)):
     # add plan
@@ -222,7 +204,6 @@ with CompositeAction('Adding plan with name {0} '.format(planName)):
     beamSetArc1 = plan.AddNewBeamSet(Name = beamSetPrimaryName, ExaminationName = examinationName,
 		MachineName = defaultLinac, Modality = "Photons", TreatmentTechnique = "VMAT",
 		PatientPosition = "HeadFirstSupine", NumberOfFractions = defaultFractions, CreateSetupBeams = False)
-
 
 # Load the current plan and beamset into the system
 LoadPlanAndBeamSet(case, plan, beamSetArc1)
@@ -237,17 +218,8 @@ with CompositeAction('Create arc beam'):
 	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvT].GetCenterOfRoi()
 	isodata = beamSetArc1.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	# ------ load single counterclockwise full arc
-	# deprecate - add 7 static IMRT fields around the ROI-based isocenter
-	#beamSetImrt.CreatePhotonBeam(Name = '1; T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	#beamSetImrt.CreatePhotonBeam(Name = '2; T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	#beamSetImrt.CreatePhotonBeam(Name = '3; T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	#beamSetImrt.CreatePhotonBeam(Name = '4; T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	#beamSetImrt.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	#beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	#beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	beamSetArc1.CreateArcBeam(Name='Arc1', Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
+	beamSetArc1.CreateArcBeam(Name=beamArcPrimaryName, Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
 #
-
 patient.Save()
 
 # 9. Set a predefined template manually
@@ -287,6 +259,8 @@ optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegr
 
 # 12. Execute first run optimization with final dose (as set above in opt settings)
 plan.PlanOptimizations[0].RunOptimization()	
+# ---- trigger just one additional warmstart
+plan.PlanOptimizations[0].RunOptimization()	
 
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
@@ -300,12 +274,11 @@ patient.Save()
 # ------------- AUTO IMRT FALLBACK PLAN CREATION
 #
 # 5 - 7. Define unique plan, beamset and dosegrid
-#---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
+#---------- redefine the plan name parameter
 planName = 'ProstA_78_39_fb'
 planName = UniquePlanName(planName, case)
-#
 beamSetPrimaryName = 'IMRT_Fallback' #prepares a standard 7-fld StepNShoot IMRT
-examinationName = examination.Name
+#
 #
 # --------- Setup a standard IMRT protocol plan
 with CompositeAction('Adding plan with name {0} '.format(planName)):
@@ -340,8 +313,6 @@ with CompositeAction('Create StepNShoot beams'):
 	beamSetImrt.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, IsocenterData = isodata)
 	beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, IsocenterData = isodata)
 	beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, IsocenterData = isodata)
-	# ------ load single counterclockwise full arc
-	#beamSetArc1.CreateArcBeam(Name='Arc1', Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
 #
 
 patient.Save()
@@ -389,6 +360,8 @@ optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
 #
 
 # 12. Execute first run optimization with final dose (as set above in opt settings)
+plan.PlanOptimizations[0].RunOptimization()	
+# - one more as warm start
 plan.PlanOptimizations[0].RunOptimization()	
 
 # 13. compute final dose not necessary due to optimization setting
