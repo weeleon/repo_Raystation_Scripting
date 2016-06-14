@@ -162,7 +162,7 @@ CreateMarginPtvT(pm,examination)
 # ----------- Conformity structure - Wall; PTV-T+5mm
 try:
 	pm.CreateRoi(Name=wall5mmPtvT, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[wall5mmPtvT].SetWallExpression(SourceRoiName=ptvTSV, OutwardDistance=0.5, InwardDistance=0)
+	pm.RegionsOfInterest[wall5mmPtvT].SetWallExpression(SourceRoiName=ptvT, OutwardDistance=0.5, InwardDistance=0)
 	pm.RegionsOfInterest[wall5mmPtvT].UpdateDerivedGeometry(Examination=examination)
 except Exception:
 	print 'Failed to create Wall;PTV-T+5mm. Continues ...'
