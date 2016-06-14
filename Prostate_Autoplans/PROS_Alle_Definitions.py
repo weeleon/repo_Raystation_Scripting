@@ -124,9 +124,6 @@ defaultOptimVmatProstS = 'ProstS_VMAT_1arc_Optimization'
 defaultOptimVmatProstBBo = 'ProstBBo_VMAT_1arc_Optimization'
 defaultOptimVmatProstBPr = 'ProstBPr_VMAT_1arc_Optimization'
 
-# DEFINE THE STANDARD BEAM LIST NAMES
-defaultFullArcCC = ''
-defaultFullArcCW = ''
 
 
 # IMPORTANT - MODIFY WITH CAUTION - STANDARD PROCEDURES FOR AUTOPLANNING WORKFLOW
