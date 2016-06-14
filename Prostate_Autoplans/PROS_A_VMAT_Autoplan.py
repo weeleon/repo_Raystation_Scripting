@@ -35,7 +35,7 @@ RequiredRois = [ctvT, rectum, bladder, analCanal, penileBulb, testes, pelvicCouc
 #therefore if they already exist, delete first
 ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6, ptvT, wall5mmPtvT, complementExt5mmPtvT]
 #the following structures are excluded from DICOM export to the linear acc to help the nurses
-ExcludedRois = [pelvicCouchModel, pelvicCouchExtras, wall5mmPtvT, complementExt5mmPtvT]
+ExcludedRois = [wall5mmPtvT, complementExt5mmPtvT]
 
 
 #---------- auto-generate a unique plan name if the given planname already exists

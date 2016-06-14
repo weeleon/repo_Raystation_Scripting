@@ -28,7 +28,7 @@ fiducial5 = 'S5' #may or may not exist for any prostate plan
 fiducial6 = 'S6' #may or may not exist for any prostate plan
 external = 'External'
 pelvicCouchModel = 'ContesseCouch-Pelvine'
-pelvicCouchExtras = 'struts'
+
 
 
 # DEFINE A STANDARD SET OF ANATOMICAL STRUCTURE NAMES
