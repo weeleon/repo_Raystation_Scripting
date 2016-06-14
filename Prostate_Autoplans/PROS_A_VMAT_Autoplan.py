@@ -239,7 +239,7 @@ patient.Save()
 #
 
 # 9. Set a predefined template directly from the clinical database for v.5.0.2
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstA])
+plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstA])
 
 
 # 10. import optimization functions from a predefined template
@@ -338,7 +338,7 @@ patient.Save()
 #
 
 # 9. Set a predefined template directly from the clinical database for v.5.0.2
-plan.TreatmentCourse.EvaluationSetup.AddClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstA])
+plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstA])
 
 # 10. import optimization functions from a predefined template
 plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstA])
