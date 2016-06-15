@@ -91,17 +91,16 @@ complementBowelPtvE = 'OR; Tarm-(PTV-E+5mm)'
 wall5mmPtvT = 'Wall; PTV-T+5mm'
 wall5mmPtvTSV = 'Wall; PTV-TSV+5mm'
 wall8mmPtvTSV = 'Wall; PTV-TSV+8mm'
-wall10mmPtvTSV = 'Wall; PTV-TSV+10mm'
 wall5mmPtvE = 'Wall; PTV-E+5mm'
-wall10mmPtvE = 'Wall; PTV-E+10mm'
+wall8mmPtvE = 'Wall; PTV-E+8mm'
 
 transitionTSVtoE = 'PTV-E-(PTV-TSV+8mm)'
 
 complementExt5mmPtvT = 'Ext-(PTV-T+5mm)'
 complementExt5mmPtvTSV = 'Ext-(PTV-TSV+5mm)'
 complementExt5mmPtvE = 'Ext-(PTV-E+5mm)'
-complementExt10mmPtvTSV = 'Ext-(PTV-TSV+10mm)'
-complementExt10mmPtvE = 'Ext-(PTV-E+10mm)'
+complementExt8mmPtvTSV = 'Ext-(PTV-TSV+8mm)'
+complementExt8mmPtvE = 'Ext-(PTV-E+8mm)'
 
 
 # DEFINE THE STANDARD PLANNING AND PRESCRIPTION PARAMETERS
@@ -117,12 +116,14 @@ defaultClinicalGoalsProstS = 'ProstS_Clinical_Goals_Template'
 defaultClinicalGoalsProstBPr = 'ProstBPr_Clinical_Goals_Template'
 defaultClinicalGoalsProstBBo = 'ProstBBo_Clinical_Goals_Template'
 defaultClinicalGoalsProstB = 'ProstB_Clinical_Goals_Template'
+defaultClinicalGoalsProstN = 'ProstN_Clinical_Goals_Template'
 
 defaultOptimVmatProstC = 'ProstC_VMAT_1arc_Optimization'
 defaultOptimVmatProstA = 'ProstA_VMAT_1arc_Optimization'
 defaultOptimVmatProstS = 'ProstS_VMAT_1arc_Optimization'
 defaultOptimVmatProstBBo = 'ProstBBo_VMAT_1arc_Optimization'
 defaultOptimVmatProstBPr = 'ProstBPr_VMAT_1arc_Optimization'
+defaultOptimVmatProstN = 'ProstN_VMAT_2arc_Optimization'
 
 
 

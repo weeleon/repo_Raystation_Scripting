@@ -36,7 +36,7 @@ RequiredRois = [ctvT, ctvSV, ctvE, rectum, bladder, bowel, analCanal, penileBulb
 #therefore if they already exist, delete first
 ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6,ptvT, ptvSV, ptvTSV, ptvE, transitionTSVtoE, wall5mmPtvE, complementExt5mmPtvE]
 #the following structures are excluded from DICOM export to the linear acc to help the nurses
-ExcludedRois = [wall5mmPtvE, complementExt5mmPtvE]
+ExcludedRois = [wall8mmPtvTSV,wall8mmPtvE, complementExt8mmPtvE]
 
 
 #---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
@@ -45,6 +45,7 @@ planName = UniquePlanName(planName, case)
 #
 beamSetPrimaryName = 'Arc1' #prepares a single CC arc VMAT for the primary field
 beamArcPrimaryName = '1'
+beamArcDaughterName = '2'
 examinationName = examination.Name
 
 
@@ -164,24 +165,32 @@ CreateUnionPtvTSV(pm,examination)
 CreateMarginPtvE(pm,examination)
 CreateTransitionPtvTsvPtvE(pm,examination)
 #
-# ----------- Conformity structure - Wall; PTV-E+5mm
+# ----------- Conformity structure - Wall; PTV-TSV+8mm
 try:
-	pm.CreateRoi(Name=wall5mmPtvE, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[wall5mmPtvE].SetWallExpression(SourceRoiName=ptvE, OutwardDistance=0.5, InwardDistance=0)
-	pm.RegionsOfInterest[wall5mmPtvE].UpdateDerivedGeometry(Examination=examination)
+	pm.CreateRoi(Name=wall8mmPtvTSV, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[wall8mmPtvTSV].SetWallExpression(SourceRoiName=ptvTSV, OutwardDistance=0.8, InwardDistance=0)
+	pm.RegionsOfInterest[wall8mmPtvTSV].UpdateDerivedGeometry(Examination=examination)
 except Exception:
-	print 'Failed to create Wall;PTV-E+5mm. Continues ...'
+	print 'Failed to create Wall;PTV-TSV+8mm. Continues ...'
 #
-#------------- Suppression roi for low dose wash - Ext-(PTV-TSV+5mm)
-try :
-	pm.CreateRoi(Name=complementExt5mmPtvE, Color=colourComplementExternal, Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[complementExt5mmPtvE].SetAlgebraExpression(
-		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
-		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-	pm.RegionsOfInterest[complementExt5mmPtvE].UpdateDerivedGeometry(Examination=examination)
+# ----------- Conformity structure - Wall; PTV-E+8mm
+try:
+	pm.CreateRoi(Name=wall8mmPtvE, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[wall8mmPtvE].SetWallExpression(SourceRoiName=ptvE, OutwardDistance=0.8, InwardDistance=0)
+	pm.RegionsOfInterest[wall8mmPtvE].UpdateDerivedGeometry(Examination=examination)
 except Exception:
-		print 'Failed to create Ext-(PTV-E+5mm). Continues...'
+	print 'Failed to create Wall;PTV-E+8mm. Continues ...'
+#
+#------------- Suppression roi for low dose wash - Ext-(PTV-E+8mm)
+try :
+	pm.CreateRoi(Name=complementExt8mmPtvE, Color=colourComplementExternal, Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[complementExt8mmPtvE].SetAlgebraExpression(
+		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvE,ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
+		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+	pm.RegionsOfInterest[complementExt8mmPtvE].UpdateDerivedGeometry(Examination=examination)
+except Exception:
+		print 'Failed to create Ext-(PTV-E+8mm). Continues...'
 #
 #-------------- Exclude help rois used only for planning and optimization from dicom export
 for e in ExcludedRois:
@@ -281,10 +290,10 @@ patient.Save()
 #
 
 # 9. Set a predefined template directly from the clinical database for v.5.0.2
-plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
+plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstN])
 
 # 10. import optimization functions from a predefined template
-plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
+plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstN])
 
 # 11. set opt parameters and run first optimization for the VMAT plan
 optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
@@ -300,12 +309,16 @@ optimPara.DoseCalculation.IterationsInPreparationsPhase = 10
 # - constraint arc segmentation for machine deliverability
 optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
-#
+# - change optimization setting so that a single beam spawns 2 arcs
+optimPara.TreatmentSetupSettings[0].BeamSettings[0].ArcConversionPropertiesPerBeam.NumberOfArcs = 2
 
-# 12. Execute first run optimization with final dose (as set above in opt settings)
-#plan.PlanOptimizations[0].RunOptimization()	
-# ---- trigger just one additional warmstart
-#plan.PlanOptimizations[0].RunOptimization()	
+
+# 12. Execute optimization with warmstarts and final dose (as set above in opt settings)
+for w in range(2):
+	plan.PlanOptimizations[0].RunOptimization()	
+# - after optimization, rename the spawned daughter arc as "2" otherwise it is left with an autoname
+plan.BeamSets[beamSetPrimaryName].Beams[1].Name = beamArcDaughterName
+
 
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
@@ -384,10 +397,10 @@ patient.Save()
 #
 
 # 9. Set a predefined template directly from the clinical database for v.5.0.2
-plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstC])
+plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstN])
 
 # 10. import optimization functions from a predefined template
-plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstC])
+plan.PlanOptimizations[0].ApplyOptimizationTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultOptimVmatProstN])
 
 # 11. set opt parameters and run first optimization for the IMRT plan
 optimPara = plan.PlanOptimizations[0].OptimizationParameters #shorter handle
@@ -421,7 +434,7 @@ optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
 # Save IMRT auto-plan result
-patient.Save()
+#patient.Save()
 #
 #
 #
