@@ -34,8 +34,7 @@ rois = pm.StructureSets[examination.Name]
 RequiredRois = [ctvT, ctvSV, ctvE, rectum, bladder, bowel, analCanal, penileBulb, testes, pelvicCouchModel]
 # --- the script shall REGENERATE each of the following Rois each time
 #therefore if they already exist, delete first
-ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6,
-	ptvT, ptvSV, ptvTSV, ptvE, transitionTSVtoE, wall5mmPtvE, complementExt5mmPtvE]
+ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6,ptvT, ptvSV, ptvTSV, ptvE, transitionTSVtoE, wall5mmPtvE, complementExt5mmPtvE]
 #the following structures are excluded from DICOM export to the linear acc to help the nurses
 ExcludedRois = [wall5mmPtvE, complementExt5mmPtvE]
 
