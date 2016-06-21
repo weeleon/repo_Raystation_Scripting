@@ -34,9 +34,11 @@ rois = pm.StructureSets[examination.Name]
 RequiredRois = [ctvT, ctvSV, ctvE, rectum, bladder, bowel, analCanal, penileBulb, testes, pelvicCouchModel]
 # --- the script shall REGENERATE each of the following Rois each time
 #therefore if they already exist, delete first
-ScriptedRois = ['temp_ext', 'supports', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6,ptvT, ptvSV, ptvTSV, ptvE,transitionTSVtoE, wall8mmPtvTSV, wall8mmPtvE, complementExt8mmPtvE]
+ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6,ptvT, ptvSV, ptvTSV, ptvE,transitionTSVtoE, wall8mmPtvTSV, wall8mmPtvE, complementExt8mmPtvE]
 #the following structures are excluded from DICOM export to the linear acc to help the nurses
-ExcludedRois = [wall8mmPtvTSV,wall8mmPtvE, complementExt8mmPtvE]
+ExcludedRois = [wall8mmPtvTSV,wall5mmPtvE, complementExt5mmPtvE]
+#the following ROIs are generated as intermediate processes, and should be removed before running the script
+TemporaryRois = ['temp_ext', 'supports', 'temp-ptv', 'Temp1', 'Temp2', 'Temp3', 'Temp4', 'Temp5', 'Temp6']
 
 
 #---------- auto-generate a unique plan name if the name ProstC_78_39 already exists
@@ -85,6 +87,14 @@ for sr in ScriptedRois:
 		print 'Deleted - scripting will be used to generate fresh '+sr+'.'
 	except Exception:
 		print 'Scripting will be used to generate '+sr+'.'
+#
+for sr in TemporaryRois:
+	try:
+		pm.RegionsOfInterest[sr].DeleteRoi()
+		print 'Deleted - scripting will be used to generate fresh '+sr+'.'
+	except Exception:
+		print 'Scripting will be used to generate '+sr+'.'
+
 
 
 # ----------- only for future workflow
@@ -173,24 +183,35 @@ try:
 except Exception:
 	print 'Failed to create Wall;PTV-TSV+8mm. Continues ...'
 #
-# ----------- Conformity structure - Wall; PTV-E+8mm
-try:
-	pm.CreateRoi(Name=wall8mmPtvE, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[wall8mmPtvE].SetWallExpression(SourceRoiName=ptvE, OutwardDistance=0.8, InwardDistance=0)
-	pm.RegionsOfInterest[wall8mmPtvE].UpdateDerivedGeometry(Examination=examination)
-except Exception:
-	print 'Failed to create Wall;PTV-E+8mm. Continues ...'
-#
-#------------- Suppression roi for low dose wash - Ext-(PTV-E+8mm)
+#------------- temporary ROI to grow a PTV-E ring
 try :
-	pm.CreateRoi(Name=complementExt8mmPtvE, Color=colourComplementExternal, Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[complementExt8mmPtvE].SetAlgebraExpression(
-		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
-		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvE,ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
-		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+	pm.CreateRoi(Name='temp-ptv', Color=colourComplementExternal, Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest['temp-ptv'].SetAlgebraExpression(
+		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
+		ResultOperation="Union", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
 	pm.RegionsOfInterest[complementExt8mmPtvE].UpdateDerivedGeometry(Examination=examination)
 except Exception:
-		print 'Failed to create Ext-(PTV-E+8mm). Continues...'
+		print 'Failed to create temp-ptv. Continues...'
+#
+# ----------- Conformity structure - Wall; PTV-E+5mm
+try:
+	pm.CreateRoi(Name=wall5mmPtvE, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[wall5mmPtvE].SetWallExpression(SourceRoiName='temp-ptv', OutwardDistance=0.5, InwardDistance=0)
+	pm.RegionsOfInterest[wall5mmPtvE].UpdateDerivedGeometry(Examination=examination)
+except Exception:
+	print 'Failed to create Wall;PTV-E+5mm. Continues ...'
+#
+#------------- Suppression roi for low dose wash - Ext-(PTV-E+5mm)
+try :
+	pm.CreateRoi(Name=complementExt5mmPtvE, Color=colourComplementExternal, Type="Avoidance", TissueName=None, RoiMaterial=None)
+	pm.RegionsOfInterest[complementExt5mmPtvE].SetAlgebraExpression(
+		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [external], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': ['temp-ptv'], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.5, 'Inferior': 0.5, 'Anterior': 0.5, 'Posterior': 0.5, 'Right': 0.5, 'Left': 0.5 } },
+		ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+	pm.RegionsOfInterest[complementExt5mmPtvE].UpdateDerivedGeometry(Examination=examination)
+except Exception:
+		print 'Failed to create Ext-(PTV-E+5mm). Continues...'
 #
 #-------------- Exclude help rois used only for planning and optimization from dicom export
 for e in ExcludedRois:
@@ -199,6 +220,9 @@ for e in ExcludedRois:
 	except Exception :
 		raise Exception('Please check structure set : '+e+' cannot be excluded from DCM export.')
 # ------------- ANATOMY PREPARATION COMPLETE
+#
+# --------- clean up any leftover structures
+pm.RegionsOfInterest['temp-ptv'].DeleteRoi()
 # --------- save the active plan
 patient.Save()
 
@@ -434,7 +458,7 @@ optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
 # Save IMRT auto-plan result
-#patient.Save()
+patient.Save()
 #
 #
 #

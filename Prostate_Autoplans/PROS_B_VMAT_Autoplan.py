@@ -41,10 +41,12 @@ RequiredRois = [ctvT, ctvSV, rectum, bladder, analCanal, penileBulb, testes, pel
 #
 #the script shall REGENERATE each of the following Rois each time
 #therefore if they already exist, delete first
-ScriptedRois = ['temp_ext', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6, ptvT, ptvSV, ptvTSV, wall5mmPtvT, wall5mmPtvTSV, complementExt5mmPtvT, complementExt5mmPtvTSV]
+ScriptedRois = ['temp_ext', 'supports', external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6, ptvT, ptvSV, ptvTSV, wall5mmPtvT, wall5mmPtvTSV, complementExt5mmPtvT, complementExt5mmPtvTSV]
 #
 #the following structures are excluded from DICOM export to the linear acc to help the nurses
 ExcludedRois = [wall5mmPtvT, complementExt5mmPtvT, wall5mmPtvTSV, complementExt5mmPtvTSV]
+#the following ROIs are generated as intermediate processes, and should be removed before running the script
+TemporaryRois = ['temp_ext', 'supports', 'Temp1', 'Temp2', 'Temp3', 'Temp4', 'Temp5', 'Temp6']
 
 
 #---------- auto-generate a unique plan name if the given planname already exists
@@ -92,6 +94,14 @@ for sr in ScriptedRois:
 		print 'Deleted - scripting will be used to generate fresh '+sr+'.'
 	except Exception:
 		print 'Scripting will be used to generate '+sr+'.'
+#
+for sr in TemporaryRois:
+	try:
+		pm.RegionsOfInterest[sr].DeleteRoi()
+		print 'Deleted - scripting will be used to generate fresh '+sr+'.'
+	except Exception:
+		print 'Scripting will be used to generate '+sr+'.'
+
 
 
 # ----------- only for future workflow
