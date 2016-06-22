@@ -93,6 +93,14 @@ for sr in TemporaryRois:
 		print 'Deleted - scripting will be used to generate fresh '+sr+'.'
 	except Exception:
 		print 'Scripting will be used to generate '+sr+'.'
+#
+numLP = 0
+for lp in pm.PointsOfInterest:
+	if (lp.Type == 'LocalizationPoint'):
+		numLP = numLP + 1
+if (numLP < 1):
+	raise Exception('No localization point defined - please define using POI Tools.')
+
 
 
 
