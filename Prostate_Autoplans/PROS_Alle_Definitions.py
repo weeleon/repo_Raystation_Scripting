@@ -33,8 +33,8 @@ pelvicCouchModel = 'ContesseCouch-Pelvine'
 
 # DEFINE A STANDARD SET OF ANATOMICAL STRUCTURE NAMES
 external = 'External'
-femHeadLeft = 'OR; Cap fem dex'
-femHeadRight = 'OR; Cap fem sin'
+femHeadLeft = 'OR; Cap fem sin'
+femHeadRight = 'OR; Cap fem dex'
 ptvT = 'PTV-T'
 ptvSV = 'PTV-SV'
 ptvTSV = 'PTV-TSV'

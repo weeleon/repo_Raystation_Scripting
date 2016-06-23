@@ -45,9 +45,8 @@ TemporaryRois = ['temp_ext', 'supports', 'temp-ptv', 'Temp1', 'Temp2', 'Temp3', 
 planName = 'ProstN_78_39'
 planName = UniquePlanName(planName, case)
 #
-beamSetPrimaryName = 'Arc1' #prepares a single CC arc VMAT for the primary field
-beamArcPrimaryName = '1'
-beamArcDaughterName = '2'
+beamSetPrimaryName = planName #prepares a single CC arc VMAT for the primary field
+beamArcPrimaryName = 'A1'
 examinationName = examination.Name
 
 
@@ -295,7 +294,7 @@ with CompositeAction('Create arc beam'):
 	#beamSetImrt.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	#beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	#beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, Isocenter = {'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
-	beamSetArc1.CreateArcBeam(Name=beamArcPrimaryName, Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
+	beamSetArc1.CreateArcBeam(Name=beamArcPrimaryName, Description=beamArcPrimaryName, Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
 #
 
 patient.Save()
@@ -336,7 +335,7 @@ optimPara.Algorithm.OptimalityTolerance = 1E-05
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
 # - set number of iterations in preparation phase
-optimPara.DoseCalculation.IterationsInPreparationsPhase = 10
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 7
 # - constraint arc segmentation for machine deliverability
 optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
@@ -347,8 +346,6 @@ optimPara.TreatmentSetupSettings[0].BeamSettings[0].ArcConversionPropertiesPerBe
 # 12. Execute optimization with warmstarts and final dose (as set above in opt settings)
 for w in range(2):
 	plan.PlanOptimizations[0].RunOptimization()	
-# - after optimization, rename the spawned daughter arc as "2" otherwise it is left with an autoname
-plan.BeamSets[beamSetPrimaryName].Beams[1].Name = beamArcDaughterName
 
 
 # 13. compute final dose not necessary due to optimization setting
@@ -367,7 +364,7 @@ patient.Save()
 planName = 'ProstN_78_39_fb'
 planName = UniquePlanName(planName, case)
 #
-beamSetPrimaryName = 'IMRT_Fallback' #prepares a standard 7-fld StepNShoot IMRT
+beamSetPrimaryName = planName #prepares a standard 7-fld StepNShoot IMRT
 examinationName = examination.Name
 #
 # --------- Setup a standard IMRT protocol plan
@@ -396,13 +393,13 @@ with CompositeAction('Create StepNShoot beams'):
 	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSV].GetCenterOfRoi()
 	isodata = beamSetImrt.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	# add 7 static IMRT fields around the ROI-based isocenter
-	beamSetImrt.CreatePhotonBeam(Name = '1; T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '2; T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '3; T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '4; T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '5; T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '6; T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, IsocenterData = isodata)
-	beamSetImrt.CreatePhotonBeam(Name = '7; T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = 'T154A', Description = 'T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = 'T102A', Description = 'T102A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 102, CollimatorAngle = 345, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = 'T050A', Description = 'T050A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 50, CollimatorAngle = 45, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = 'T206A', Description = 'T206A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 206, CollimatorAngle = 345, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = 'T258A', Description = 'T258A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 258, CollimatorAngle = 15, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = 'T310A', Description = 'T310A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, IsocenterData = isodata)
+	beamSetImrt.CreatePhotonBeam(Name = 'T000A', Description = 'T000A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, IsocenterData = isodata)
 #
 
 patient.Save()
@@ -443,7 +440,7 @@ optimPara.Algorithm.OptimalityTolerance = 1E-05
 optimPara.DoseCalculation.ComputeFinalDose = 'True'
 optimPara.DoseCalculation.ComputeIntermediateDose = 'True'
 # - set number of iterations in preparation phase
-optimPara.DoseCalculation.IterationsInPreparationsPhase = 10
+optimPara.DoseCalculation.IterationsInPreparationsPhase = 7
 # - constraint arc segmentation for machine deliverability
 #optimPara.SegmentConversion.ArcConversionProperties.UseMaxLeafTravelDistancePerDegree = 'True'
 #optimPara.SegmentConversion.ArcConversionProperties.MaxLeafTravelDistancePerDegree = 0.40
@@ -457,9 +454,9 @@ optimPara.SegmentConversion.MinSegmentMUPerFraction = 4
 
 
 # 12. Execute first run optimization with final dose (as set above in opt settings)
-#plan.PlanOptimizations[0].RunOptimization()
+plan.PlanOptimizations[0].RunOptimization()
 # one more as warm start
-#plan.PlanOptimizations[0].RunOptimization()
+plan.PlanOptimizations[0].RunOptimization()
 
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
