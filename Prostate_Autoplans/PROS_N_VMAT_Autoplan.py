@@ -353,7 +353,7 @@ for w in range(2):
 
 # re-define beam description for daughter arc
 beamArcDaughterName = beamArcPrimaryName + '_1'
-beamSetArc1.Beams[beamArcPrimaryName].Description = beamArcDaughterName
+beamSetArc1.Beams[beamArcDaughterName].Description = beamArcDaughterName
 
 # Save VMAT auto-plan result
 patient.Save()
