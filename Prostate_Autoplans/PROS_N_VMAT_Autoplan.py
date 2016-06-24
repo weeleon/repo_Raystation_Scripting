@@ -351,6 +351,10 @@ for w in range(2):
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
+# re-define beam description for daughter arc
+beamArcDaughterName = beamArcPrimaryName + '_1'
+beamSetArc1.Beams[beamArcPrimaryName].Description = beamArcDaughterName
+
 # Save VMAT auto-plan result
 patient.Save()
 #
