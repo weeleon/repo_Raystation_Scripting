@@ -34,7 +34,7 @@ rois = pm.StructureSets[examination.Name]
 RequiredRois = [ctvT, ctvSV, ctvE, rectum, bladder, bowel, analCanal, penileBulb, testes, pelvicCouchModel]
 # --- the script shall REGENERATE each of the following Rois each time
 #therefore if they already exist, delete first
-ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6,ptvT, ptvSV, ptvTSV, ptvE,transitionTSVtoE, wall8mmPtvTSV, wall5mmPtvE, complementExt5mmPtvE]
+ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6,ptvT, ptvSV, ptvTSV, ptvE,transitionTSVtoE, ptvTSVE, wall8mmPtvTSV, wall5mmPtvE, complementExt5mmPtvE]
 #the following structures are excluded from DICOM export to the linear acc to help the nurses
 ExcludedRois = [wall8mmPtvTSV,wall5mmPtvE, complementExt5mmPtvE]
 #the following ROIs are generated as intermediate processes, and should be removed before running the script
@@ -179,6 +179,7 @@ CreateMarginPtvT(pm,examination)
 CreateMarginPtvSV(pm,examination)
 CreateUnionPtvTSV(pm,examination)
 CreateMarginPtvE(pm,examination)
+CreateUnionPtvTSVE(pm,examination)
 CreateTransitionPtvTsvPtvE(pm,examination)
 #
 # ----------- Conformity structure - Wall; PTV-TSV+8mm
@@ -283,7 +284,7 @@ with CompositeAction('Create arc beam'):
 	beamSetArc1.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
 	#
 	# ----- set the plan isocenter to the centre of the reference ROI
-	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvE].GetCenterOfRoi()
+	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSVE].GetCenterOfRoi()
 	isodata = beamSetArc1.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	# ------ load single counterclockwise full arc
 	# deprecate - add 7 static IMRT fields around the ROI-based isocenter
@@ -394,7 +395,7 @@ with CompositeAction('Create StepNShoot beams'):
 	beamSetImrt.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
 	#
 	# ----- set the plan isocenter to the centre of the reference ROI
-	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvE].GetCenterOfRoi()
+	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSVE].GetCenterOfRoi()
 	isodata = beamSetImrt.CreateDefaultIsocenterData(Position={'x':isocenter.x, 'y':isocenter.y, 'z':isocenter.z})
 	# add 7 static IMRT fields around the ROI-based isocenter
 	beamSetImrt.CreatePhotonBeam(Name = 'T154A', Description = 'T154A', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 154, CollimatorAngle = 15, IsocenterData = isodata)

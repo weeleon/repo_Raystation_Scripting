@@ -39,6 +39,7 @@ ptvT = 'PTV-T'
 ptvSV = 'PTV-SV'
 ptvTSV = 'PTV-TSV'
 ptvE = 'PTV-E'
+ptvTSVE = 'PTV-(TSV+E)'
 hvRect = 'HV-Rectum'
 marker1 = 'Mark1'
 marker2 = 'Mark2'
@@ -318,6 +319,20 @@ def CreateUnionPtvTSV(pm,exam):
 		pm.RegionsOfInterest[ptvTSV].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to create PTV-TSV. Continues ...'
+#procedure CreatedUnionPtvTSV
+
+def CreateUnionPtvTSVE(pm,exam):
+# 4) union of PTV-TSV and PTV-E
+	#PTV-TSVE
+	try:
+		pm.CreateRoi(Name=ptvTSVE, Color=colourPtvE, Type="PTV", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[ptvTSVE].SetAlgebraExpression(
+			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+			ResultOperation="Union", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+		pm.RegionsOfInterest[ptvTSVE].UpdateDerivedGeometry(Examination=exam)
+	except Exception:
+		print 'Failed to create PTV-(TSV+E). Continues ...'
 #procedure CreatedUnionPtvTSV
 
 def CreateTransitionPtvTsvPtvE(pm,exam):
