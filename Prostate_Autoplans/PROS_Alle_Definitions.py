@@ -381,7 +381,6 @@ def CreateTransitionPtvTPtvSVE(pm,exam):
 #procedure CreateTransitionPtvTsvPtvE ends
 
 
-
 def CreateComplementPtvTsvPtvE(pm,exam):
 # 6) complementary zone of PTV-E without PTV-TSV
 	#PTV-E-(PTV-TSV)

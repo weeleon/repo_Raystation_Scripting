@@ -36,7 +36,7 @@ RequiredRois = [ctvT, ctvSV, ctvE, rectum, bladder, bowel, analCanal, penileBulb
 #therefore if they already exist, delete first
 ScriptedRois = [external, femHeadLeft, femHeadRight, hvRect, marker1, marker2, marker3, marker4, marker5, marker6,ptvT, ptvSV, ptvTSV, ptvE,transitionTSVtoE, ptvTSVE, wall8mmPtvTSV, wall5mmPtvE, complementExt5mmPtvE]
 #the following structures are excluded from DICOM export to the linear acc to help the nurses
-ExcludedRois = [wall8mmPtvTSV,wall5mmPtvE, complementExt5mmPtvE]
+ExcludedRois = [wall8mmPtvT,wall5mmPtvE, complementExt5mmPtvE]
 #the following ROIs are generated as intermediate processes, and should be removed before running the script
 TemporaryRois = ['temp_ext', 'supports', 'temp-ptv', 'Temp1', 'Temp2', 'Temp3', 'Temp4', 'Temp5', 'Temp6']
 
