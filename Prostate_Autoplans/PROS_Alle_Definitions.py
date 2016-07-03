@@ -39,7 +39,8 @@ ptvT = 'PTV-T'
 ptvSV = 'PTV-SV'
 ptvTSV = 'PTV-TSV'
 ptvE = 'PTV-E'
-ptvTSVE = 'PTV-(TSV+E)'
+ptvTSVE = 'PTV-(T+SV+E)'
+ptvSVE = 'PTV-(SV+E)'
 hvRect = 'HV-Rectum'
 marker1 = 'Mark1'
 marker2 = 'Mark2'
@@ -90,12 +91,14 @@ complementBowelPtvTSV = 'OR; Tarm-(PTV-TSV+5mm)'
 complementBowelPtvE = 'OR; Tarm-(PTV-E+5mm)'
 
 wall5mmPtvT = 'Wall; PTV-T+5mm'
+wall8mmPtvT = 'Wall; PTV-T+8mm'
 wall5mmPtvTSV = 'Wall; PTV-TSV+5mm'
 wall8mmPtvTSV = 'Wall; PTV-TSV+8mm'
 wall5mmPtvE = 'Wall; PTV-E+5mm'
 wall8mmPtvE = 'Wall; PTV-E+8mm'
 
 transitionTSVtoE = 'PTV-E-(PTV-TSV+8mm)'
+transitionTtoSVE = 'PTV-(SV+E)-(PTV-T+8mm)'
 
 complementExt5mmPtvT = 'Ext-(PTV-T+5mm)'
 complementExt5mmPtvTSV = 'Ext-(PTV-TSV+5mm)'
@@ -322,17 +325,31 @@ def CreateUnionPtvTSV(pm,exam):
 #procedure CreatedUnionPtvTSV
 
 def CreateUnionPtvTSVE(pm,exam):
-# 4) union of PTV-TSV and PTV-E
+# 4) union of all ptv's
 	#PTV-TSVE
 	try:
 		pm.CreateRoi(Name=ptvTSVE, Color=colourPtvE, Type="PTV", TissueName=None, RoiMaterial=None)
 		pm.RegionsOfInterest[ptvTSVE].SetAlgebraExpression(
-			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvTSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvT,ptvSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
 			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
 			ResultOperation="Union", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
 		pm.RegionsOfInterest[ptvTSVE].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
-		print 'Failed to create PTV-(TSV+E). Continues ...'
+		print 'Failed to create PTV-(T+SV+E). Continues ...'
+#procedure CreatedUnionPtvTSV
+
+def CreateUnionPtvSVE(pm,exam):
+# 4) union of PTV-SV and PTV-E
+	#PTV-SVE
+	try:
+		pm.CreateRoi(Name=ptvSVE, Color=colourPtvE, Type="PTV", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[ptvSVE].SetAlgebraExpression(
+			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvSV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+			ResultOperation="Union", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+		pm.RegionsOfInterest[ptvSVE].UpdateDerivedGeometry(Examination=exam)
+	except Exception:
+		print 'Failed to create PTV-(SV+E). Continues ...'
 #procedure CreatedUnionPtvTSV
 
 def CreateTransitionPtvTsvPtvE(pm,exam):
@@ -348,6 +365,22 @@ def CreateTransitionPtvTsvPtvE(pm,exam):
 	except Exception:
 		print 'Failed to create PTV-E-(PTV-TSV+8mm). Continues...'
 #procedure CreateTransitionPtvTsvPtvE ends
+
+def CreateTransitionPtvTPtvSVE(pm,exam):
+# 5) transition zone between PTV-SV and PTV-(SV+E)
+	#PTV-(SV+E)-(PTV-T+8mm)
+	try :
+		pm.CreateRoi(Name=transitionTtoSVE, Color=colourPtvE, Type="PTV", TissueName=None, RoiMaterial=None)
+		pm.RegionsOfInterest[transitionTtoSVE].SetAlgebraExpression(
+			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvSVE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvT], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
+			ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
+		pm.RegionsOfInterest[transitionTSVtoE].UpdateDerivedGeometry(Examination=exam)
+	except Exception:
+		print 'Failed to create PTV-(SV+E)-(PTV-T+8mm). Continues...'
+#procedure CreateTransitionPtvTsvPtvE ends
+
+
 
 def CreateComplementPtvTsvPtvE(pm,exam):
 # 6) complementary zone of PTV-E without PTV-TSV
