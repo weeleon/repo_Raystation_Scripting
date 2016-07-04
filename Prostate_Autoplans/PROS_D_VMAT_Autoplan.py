@@ -281,7 +281,7 @@ LoadPlanAndBeamSet(case, plan, beamSetArc1)
 # 8. Create beam list
 with CompositeAction('Create arc beam'):
 	# ----- no need to add prescription for dynamic delivery
-	beamSetArc1.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
+	beamSetArc1.AddDosePrescriptionToRoi(RoiName = ptvT, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
 	#
 	# ----- set the plan isocenter to the centre of the reference ROI
 	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSVE].GetCenterOfRoi()
