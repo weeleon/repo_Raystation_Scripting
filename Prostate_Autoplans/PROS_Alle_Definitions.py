@@ -377,7 +377,7 @@ def CreateTransitionPtvTPtvSVE(pm,exam):
 			ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvSVE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
 			ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvT], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
 			ResultOperation="Subtraction", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
-		pm.RegionsOfInterest[transitionTSVtoE].UpdateDerivedGeometry(Examination=exam)
+		pm.RegionsOfInterest[transitionTtoSVE].UpdateDerivedGeometry(Examination=exam)
 	except Exception:
 		print 'Failed to create PTV-(SV+E)-(PTV-T+8mm). Continues...'
 #procedure CreateTransitionPtvTsvPtvE ends

@@ -194,7 +194,7 @@ except Exception:
 try :
 	pm.CreateRoi(Name='temp-ptv', Color=colourComplementExternal, Type="Avoidance", TissueName=None, RoiMaterial=None)
 	pm.RegionsOfInterest['temp-ptv'].SetAlgebraExpression(
-		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvESV], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
+		ExpressionA={ 'Operation': "Union", 'SourceRoiNames': [ptvSVE], 'MarginSettings': { 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 } },
 		ExpressionB={ 'Operation': "Union", 'SourceRoiNames': [ptvT], 'MarginSettings': { 'Type': "Expand", 'Superior': 0.8, 'Inferior': 0.8, 'Anterior': 0.8, 'Posterior': 0.8, 'Right': 0.8, 'Left': 0.8 } },
 		ResultOperation="Union", ResultMarginSettings={ 'Type': "Expand", 'Superior': 0, 'Inferior': 0, 'Anterior': 0, 'Posterior': 0, 'Right': 0, 'Left': 0 })
 	pm.RegionsOfInterest['temp-ptv'].UpdateDerivedGeometry(Examination=examination)
