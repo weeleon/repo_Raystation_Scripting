@@ -185,7 +185,7 @@ CreateTransitionPtvTPtvSVE(pm,examination)
 # ----------- Conformity structure - Wall; PTV-T+8mm
 try:
 	pm.CreateRoi(Name=wall8mmPtvT, Color=colourWallStructures, Type="Avoidance", TissueName=None, RoiMaterial=None)
-	pm.RegionsOfInterest[wall8mmPtvT].SetWallExpression(SourceRoiName=ptvTSV, OutwardDistance=0.8, InwardDistance=0)
+	pm.RegionsOfInterest[wall8mmPtvT].SetWallExpression(SourceRoiName=ptvT, OutwardDistance=0.8, InwardDistance=0)
 	pm.RegionsOfInterest[wall8mmPtvT].UpdateDerivedGeometry(Examination=examination)
 except Exception:
 	print 'Failed to create Wall;PTV-T+8mm. Continues ...'
@@ -392,7 +392,7 @@ LoadPlanAndBeamSet(case, plan, beamSetImrt)
 # 8. Create beam list
 with CompositeAction('Create StepNShoot beams'):
 	# ----- no need to add prescription for dynamic delivery
-	beamSetImrt.AddDosePrescriptionToRoi(RoiName = ptvTSV, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
+	beamSetImrt.AddDosePrescriptionToRoi(RoiName = ptvT, PrescriptionType = "NearMinimumDose", DoseValue = 7410, RelativePrescriptionLevel = 1, AutoScaleDose='False')
 	#
 	# ----- set the plan isocenter to the centre of the reference ROI
 	isocenter = pm.StructureSets[examinationName].RoiGeometries[ptvTSVE].GetCenterOfRoi()
