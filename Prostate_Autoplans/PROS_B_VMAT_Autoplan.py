@@ -441,8 +441,8 @@ patient.Save()
 planName = 'ProstB_78_39_fb'
 planName = UniquePlanName(planName, case)
 #
-beamSetPrimaryName = 'ProstBPr_50_25' #prepares a standard 7-fld StepNShoot IMRT
-beamSetBoostName = 'ProstBBo_28_14' #prepares a standard 7-fld StepNShoot IMRT
+beamSetPrimaryName = 'ProstBPr_50_25fb' #prepares a standard 7-fld StepNShoot IMRT
+beamSetBoostName = 'ProstBBo_28_14fb' #prepares a standard 7-fld StepNShoot IMRT
 #
 # --------- Setup a standard IMRT protocol plan
 # add plan
