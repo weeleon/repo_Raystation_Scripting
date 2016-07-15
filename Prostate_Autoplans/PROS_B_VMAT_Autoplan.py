@@ -328,6 +328,12 @@ plan.PlanOptimizations[0].RunOptimization()
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
+# set beam number(s)
+bNum = 1
+for b in beamSetArc1.Beams :
+	b.Number = bNum
+	bNum = bNum + 1
+
 # Save VMAT auto-plan result
 patient.Save()
 #
@@ -346,8 +352,7 @@ with CompositeAction('Create arc beam'):
 	# ------ load single counterclockwise full arc
 	beamSetArc2.CreateArcBeam(Name=beamArcBoostName, Description=beamArcBoostName, Energy=defaultPhotonEn, CouchAngle=0, GantryAngle=179.9, ArcStopGantryAngle=180.1, ArcRotationDirection='CounterClockwise', CollimatorAngle = 45, IsocenterData = isodata)
 #
-# reset beam number(s)
-beamSetArc2.Beams[beamArcBoostName].Number = 2
+
 # save the current state
 patient.Save()
 
@@ -427,6 +432,10 @@ plan.PlanOptimizations[1].RunOptimization()
 #plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=5000,IsComparativeGoal='False',Priority=9)
 plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstB])
 
+# set beam number(s)
+for b in beamSetArc2.Beams :
+	b.Number = bNum
+	bNum = bNum + 1
 
 # Save VMAT auto-plan result
 patient.Save()
@@ -546,6 +555,11 @@ plan.PlanOptimizations[0].RunOptimization()
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
+# set fallback beam number(s)
+for b in beamSetImrt1.Beams :
+	b.Number = bNum
+	bNum = bNum + 1
+
 # Save IMRT auto-plan result
 patient.Save()
 
@@ -570,11 +584,7 @@ with CompositeAction('Create StepNShoot beams'):
 	beamSetImrt2.CreatePhotonBeam(Name = 'T310B', Description = 'T310B', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 310, CollimatorAngle = 315, IsocenterData = isodata)
 	beamSetImrt2.CreatePhotonBeam(Name = 'T000B', Description = 'T000B', Energy=defaultPhotonEn, CouchAngle = 0, GantryAngle = 0, CollimatorAngle = 0, IsocenterData = isodata)
 #
-# reset beam number(s)
-ni = 8
-for nb in beamSetImrt2.Beams:
-	nb.Number = ni
-	ni = ni + 1
+
 #save current state
 patient.Save()
 
@@ -663,6 +673,10 @@ plan.PlanOptimizations[1].RunOptimization()
 #plan.TreatmentCourse.EvaluationSetup.AddClinicalGoal(RoiName=femHeadRight,GoalCriteria='AtMost',GoalType='VolumeAtDose',AcceptanceLevel=0.05,ParameterValue=5000,IsComparativeGoal='False',Priority=9)
 plan.TreatmentCourse.EvaluationSetup.ApplyClinicalGoalTemplate(Template=patient_db.TemplateTreatmentOptimizations[defaultClinicalGoalsProstB])
 
+# set fallback beam number(s)
+for b in beamSetImrt2.Beams :
+	b.Number = bNum
+	bNum = bNum + 1
 
 # Save IMRT auto-plan result
 patient.Save()

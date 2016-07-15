@@ -286,6 +286,13 @@ plan.PlanOptimizations[0].RunOptimization()
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
+
+# set beam number(s)
+bNum = 1
+for b in beamSetArc1.Beams :
+	b.Number = bNum
+	bNum = bNum + 1
+
 # Save VMAT auto-plan result
 patient.Save()
 #
@@ -390,6 +397,11 @@ plan.PlanOptimizations[0].RunOptimization()
 
 # 13. compute final dose not necessary due to optimization setting
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
+
+# set fallback plan beam number(s)
+for b in beamSetImrt.Beams :
+	b.Number = bNum
+	bNum = bNum + 1
 
 # Save IMRT auto-plan result
 patient.Save()
