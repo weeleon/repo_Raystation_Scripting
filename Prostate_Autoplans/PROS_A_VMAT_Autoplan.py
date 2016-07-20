@@ -399,6 +399,7 @@ plan.PlanOptimizations[0].RunOptimization()
 #beamSetArc1.ComputeDose(ComputeBeamDoses=True, DoseAlgorithm="CCDose", ForceRecompute=False)
 
 # set fallback plan beam number(s)
+bNum = 11
 for b in beamSetImrt.Beams :
 	b.Number = bNum
 	bNum = bNum + 1
